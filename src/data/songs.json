@@ -1,0 +1,39 @@
+{
+  "songs": [
+    {
+      "id": 1,
+      "title": "Blinding Lights",
+      "artist": "The Weeknd",
+      "youtubeId": "fHI8X4OXluQ",
+      "thumbnail": "https://img.youtube.com/vi/fHI8X4OXluQ/mqdefault.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Shape of You",
+      "artist": "Ed Sheeran",
+      "youtubeId": "JGwWNGJdvx8",
+      "thumbnail": "https://img.youtube.com/vi/JGwWNGJdvx8/mqdefault.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Levitating",
+      "artist": "Dua Lipa",
+      "youtubeId": "TUVcZfQe-Kw",
+      "thumbnail": "https://img.youtube.com/vi/TUVcZfQe-Kw/mqdefault.jpg"
+    },
+    {
+      "id": 4,
+      "title": "Peaches",
+      "artist": "Justin Bieber",
+      "youtubeId": "tQ0yjYUFKAE",
+      "thumbnail": "https://img.youtube.com/vi/tQ0yjYUFKAE/mqdefault.jpg"
+    },
+    {
+      "id": 5,
+      "title": "Save Your Tears",
+      "artist": "The Weeknd",
+      "youtubeId": "XXYlFuWEuKI",
+      "thumbnail": "https://img.youtube.com/vi/XXYlFuWEuKI/mqdefault.jpg"
+    }
+  ]
+}
