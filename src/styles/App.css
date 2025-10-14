@@ -74,11 +74,12 @@ body::before {
 }
 
 .app-container {
-  /* display: flex; */
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .player-container {
@@ -88,6 +89,9 @@ body::before {
   justify-content: center;
   position: relative;
   height: 100vh;
+  overflow-y: auto;
+  padding: 24px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .player-section {
@@ -127,7 +131,7 @@ body::before {
 
 .search-input {
   width: 100%;
-  padding: 16px 52px 16px 52px;
+  padding: 16px 52px;
   background: var(--glass-bg);
   backdrop-filter: blur(30px);
   border: 1px solid var(--border);
@@ -137,19 +141,16 @@ body::before {
   outline: none;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  
 }
 
 .search-input::placeholder {
   color: var(--text-muted);
- 
 }
 
 .search-input:focus {
   border-color: var(--primary);
   box-shadow: 0 4px 30px var(--glow), 0 0 0 4px rgba(139, 92, 246, 0.1);
   background: rgba(15, 23, 42, 0.8);
-  
 }
 
 .clear-search {
@@ -179,7 +180,7 @@ body::before {
 .search-dropdown {
   position: absolute;
   top: 100%;
-  left: 0%;
+  left: 0;
   width: 100%;
   background: var(--glass-bg);
   backdrop-filter: blur(30px);
@@ -495,6 +496,35 @@ body::before {
 .queue-section {
   display: flex;
   justify-content: center;
+  align-items: center;
+  margin-top: clamp(8px, 2vh, 16px);
+}
+
+/* BASE STYLES FOR QUEUE BUTTON */
+.queue-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.queue-btn:hover {
+  background: var(--card-hover);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px var(--shadow);
+}
+.queue-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 
@@ -505,9 +535,14 @@ body::before {
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
   transform: translateX(100%);
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
+  z-index: 2000;
 }
 
 .playlist-panel.visible {
@@ -768,29 +803,6 @@ body::before {
     max-width: 100%;
     width: 100%;
   }
-
-.queue-btn {
-  padding: clamp(10px, 1.5vh, 14px) clamp(20px, 2vw, 28px);
-  font-size: clamp(14px, 1.5vh, 16px);
-  position: absolute;
-  bottom: clamp(16px, 3vh, 24px);
-  right: clamp(16px, 3vw, 24px);
-  z-index: 1000;
-  background: var(--primary);
-  color: var(--text-primary);
-  border: none;
-  border-radius: 30px;
-  box-shadow: 0 4px 20px var(--shadow);
-  transition: all 0.3s ease;
-}
-
-.queue-btn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px var(--glow);
-}  .search-input {
-    padding: 15px 50px 15px 50px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -851,13 +863,8 @@ body::before {
     gap: 14px;
   }
 
-  .queue-btn {
-    padding: 12px 24px;
-    font-size: 15px;
-  }
-
   .search-input {
-    padding: 14px 48px 14px 48px;
+    padding: 14px 48px;
     font-size: 14px;
     border-radius: 18px;
   }
@@ -1005,6 +1012,24 @@ body::before {
 
   .song-details p {
     font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app.playlist-visible .player-container {
+    width: calc(100% - 440px); 
+  }
+
+  .playlist-panel {
+    position: relative;
+    transform: translateX(0);
+    flex-shrink: 0;
+    width: 0;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app.playlist-visible .playlist-panel {
+    width: 440px;
   }
 }
 

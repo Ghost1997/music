@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Player from './components/Player';
 import Controls from './components/Controls';
 import ProgressBar from './components/ProgressBar';
@@ -7,6 +7,7 @@ import SearchBar from './components/SearchBar';
 import { songAPI } from './services/api';
 import { validateApiConnection } from './utils/apiValidator';
 import './styles/App.css';
+import { QueueIcon } from './components/Icons'; // Assuming you create an Icons component
 
 function App() {
   const [songs, setSongs] = useState([]);
@@ -15,25 +16,25 @@ function App() {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playerReady, setPlayerReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  
+
+  // Use a ref to keep track of the playing state to avoid stale closures in callbacks
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
   // Fetch all songs on mount
   useEffect(() => {
-    console.log('Component mounted, validating API connection...'); // Debug log
-    
     const initializeApp = async () => {
       try {
         const validation = await validateApiConnection();
-        console.log('API validation result:', validation);
-        
         if (validation.success) {
-          console.log('API connection validated, fetching songs...');
           await fetchAllSongs();
         } else {
           console.error('API validation failed:', validation.error);
@@ -47,62 +48,58 @@ function App() {
 
     initializeApp();
   }, []);
-
+  
   const fetchAllSongs = async () => {
     try {
       setLoading(true);
-      console.log('Making API call to fetch songs...'); // Debug log
       const response = await songAPI.getAllSongs();
-      console.log('API Response:', response); // Debug log
-      
       if (response.success && Array.isArray(response.data)) {
-        console.log('Setting songs:', response.data.length, 'songs found'); // Debug log
-        
-        // Map the API response to match the expected structure
         const formattedSongs = response.data.map(song => ({
           id: song._id,
           youtubeId: song.youtubeId,
           title: song.title,
-          artist: song.artist.split('|')[0].trim(), // Take the first part before | as artist
+          artist: song.artist.split('|')[0].trim(),
           thumbnail: song.thumbnail,
-          duration: song.duration,
-          durationSeconds: song.durationSeconds
         }));
-        
         setSongs(formattedSongs);
-        
         if (formattedSongs.length > 0) {
           setCurrentSongIndex(0);
         }
       } else {
         console.error('Failed to fetch songs:', response.error);
-        setSongs([]); // Set empty array on error
+        setSongs([]);
       }
     } catch (error) {
       console.error('Error fetching songs:', error);
-      setSongs([]); // Set empty array on error
+      setSongs([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Search songs with debounce
+  // Debounced search
   useEffect(() => {
     if (searchQuery.trim().length === 0) {
       setSearchResults([]);
       setShowSuggestions(false);
       return;
     }
-
     const timeoutId = setTimeout(async () => {
       try {
         setIsSearching(true);
         const response = await songAPI.searchSongs(searchQuery);
         if (response.success) {
-          setSearchResults(response.data);
+          // Format search results to match song structure
+          const formattedResults = response.data.map(song => ({
+            id: song._id || song.youtubeId,
+            youtubeId: song.youtubeId,
+            title: song.title,
+            artist: song.artist.split('|')[0].trim(),
+            thumbnail: song.thumbnail,
+          }));
+          setSearchResults(formattedResults);
           setShowSuggestions(true);
         } else {
-          console.error('Search failed:', response.error);
           setSearchResults([]);
         }
       } catch (error) {
@@ -112,119 +109,32 @@ function App() {
         setIsSearching(false);
       }
     }, 300);
-
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
   const currentSong = songs[currentSongIndex];
 
-  // Filter songs for display
-  const filteredSongs = searchQuery.length > 0 ? searchResults : songs;
-
-  // Handle next song
-  const handleNext = useCallback(async () => {
+  // Player Controls
+  const handleNext = useCallback(() => {
     if (!songs.length) return;
-    
-    try {
-      const nextIndex = (currentSongIndex + 1) % songs.length;
-      const nextSong = songs[nextIndex];
-      
-      if (player && player.loadVideoById) {
-        setCurrentSongIndex(nextIndex);
-        setCurrentTime(0);
-        player.loadVideoById(nextSong.youtubeId);
-      }
-    } catch (error) {
-      console.error('Error playing next song:', error);
-    }
-  }, [currentSongIndex, songs, player]);
-
-  // Update progress
-  useEffect(() => {
-    if (!player || !isPlaying) return;
-
-    const interval = setInterval(() => {
-      if (player && player.getCurrentTime) {
-        const time = player.getCurrentTime();
-        setCurrentTime(time);
-        
-        if (player.getDuration) {
-          const dur = player.getDuration();
-          if (dur !== duration) {
-            setDuration(dur);
-          }
-        }
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [player, isPlaying, duration]);
-
-  const handlePlayerReady = useCallback((playerInstance) => {
-    setPlayer(playerInstance);
-    setPlayerReady(true);
-    
-    setTimeout(() => {
-      try {
-        if (playerInstance && playerInstance.getDuration) {
-          const dur = playerInstance.getDuration();
-          setDuration(dur);
-        }
-      } catch (error) {
-        console.log('Duration get error:', error.message);
-      }
-    }, 500);
-  }, []);
-
-  const handleStateChange = useCallback((event) => {
-    if (!event || typeof event.data !== 'number') {
-      console.error('Invalid player state event:', event);
-      return;
-    }
-
-    switch (event.data) {
-      case -1: // unstarted
-        setIsPlaying(false);
-        setPlayerReady(true); // Player is ready even when unstarted
-        break;
-      case 0: // ended
-        if (songs.length > 1) { // Only auto-play next if there are more songs
-          handleNext();
-        } else {
-          setIsPlaying(false);
-        }
-        break;
-      case 1: // playing
-        setIsPlaying(true);
-        setPlayerReady(true);
-        if (player && player.getDuration) {
-          const dur = player.getDuration();
-          setDuration(dur);
-        }
-        break;
-      case 2: // paused
-        setIsPlaying(false);
-        break;
-      case 3: // buffering
-        // Keep previous playing state, just show loading indicator if needed
-        break;
-      case 5: // video cued
-        setPlayerReady(true);
-        setIsPlaying(false); // Ensure paused state when video is cued
-        if (player && player.playVideo && isPlaying) {
-          player.playVideo(); // Auto-play only if we were playing before
-        }
-        break;
-      default:
-        break;
-    }
-  }, [handleNext, player]);
+    const nextIndex = (currentSongIndex + 1) % songs.length;
+    setCurrentSongIndex(nextIndex);
+  }, [currentSongIndex, songs.length]);
+  
+  const handlePrevious = () => {
+    if (!songs.length) return;
+    const prevIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+    setCurrentSongIndex(prevIndex);
+  };
 
   const handlePlayPause = () => {
-    if (!player) return;
+    if (!player || !currentSong) return;
     
     try {
-      if (isPlaying) {
+      // Get the actual player state
+      const playerState = player.getPlayerState();
+      
+      if (playerState === window.YT.PlayerState.PLAYING) {
         player.pauseVideo();
         setIsPlaying(false);
       } else {
@@ -232,143 +142,212 @@ function App() {
         setIsPlaying(true);
       }
     } catch (error) {
-      console.log('Play/Pause error:', error.message);
+      console.error('Error in handlePlayPause:', error);
     }
   };
-
-  const handlePrevious = () => {
-    if (!songs.length) return;
-    
-    try {
-      const prevIndex = currentSongIndex === 0 ? songs.length - 1 : currentSongIndex - 1;
-      const prevSong = songs[prevIndex];
-      
-      if (player && player.loadVideoById) {
-        setCurrentSongIndex(prevIndex);
-        setCurrentTime(0);
-        player.loadVideoById(prevSong.youtubeId);
-      }
-    } catch (error) {
-      console.error('Error playing previous song:', error);
+  
+  const handleSeek = (time) => {
+    if (player && player.seekTo) {
+      player.seekTo(time);
+      setCurrentTime(time);
     }
   };
+  
+  // Song Selection Logic
+  const handleSelectSong = (songToPlay) => {
+    const songIndex = songs.findIndex(s => s.youtubeId === songToPlay.youtubeId);
 
-  const handleSelectSong = async (song) => {
-    if (!song || !song.youtubeId) {
-      console.error('Invalid song data:', song);
-      return;
+    if (songIndex !== -1) {
+      // Song is already in the queue, just switch to it
+      setCurrentSongIndex(songIndex);
+    } else {
+      // Song is not in the queue, add it and switch to it
+      const newSongs = [...songs, songToPlay];
+      setSongs(newSongs);
+      setCurrentSongIndex(newSongs.length - 1);
     }
 
-    try {
-      // Get full song details
-      const response = await songAPI.getSongDetails(song.youtubeId);
-      if (response.success) {
-        const songData = response.data;
-        
-        // If the song isn't in the current list, add it
-        if (!songs.some(s => s.youtubeId === songData.youtubeId)) {
-          setSongs(prevSongs => [...prevSongs, songData]);
-          setCurrentSongIndex(songs.length);
-        } else {
-          const index = songs.findIndex(s => s.youtubeId === songData.youtubeId);
-          setCurrentSongIndex(index);
-        }
-        
-        // Play the song using YouTube player
-        if (player && player.loadVideoById) {
-          setCurrentTime(0);
-          player.loadVideoById(songData.youtubeId);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading song:', error);
-    }
+    // Always attempt to play the newly selected song
+    setIsPlaying(true); 
     
+    // Clear search and hide dropdown
     setShowSuggestions(false);
     setSearchQuery('');
   };
 
-  const handleSeek = (time) => {
-    if (player && player.seekTo) {
+  // Effect to control the YouTube player instance
+  useEffect(() => {
+    if (player && currentSong) {
       try {
-        player.seekTo(time);
-        setCurrentTime(time);
+        if (isPlayingRef.current) {
+          // If we're meant to be playing, load and play the video
+          player.loadVideoById(currentSong.youtubeId);
+          setIsPlaying(true);
+        } else {
+          // If we're not meant to be playing, just cue the video
+          player.cueVideoById(currentSong.youtubeId);
+          setIsPlaying(false);
+        }
       } catch (error) {
-        console.log('Seek error:', error.message);
+        console.error('Error loading video:', error);
+        // Fallback to just cuing the video
+        player.cueVideoById(currentSong.youtubeId);
+        setIsPlaying(false);
       }
     }
-  };
+  }, [currentSong, player]);
 
-  const togglePlaylist = () => {
-    setShowPlaylist(!showPlaylist);
-  };
+  // Progress bar update
+  useEffect(() => {
+    if (!player) return undefined;
 
-  const handleSearchFocus = () => {
-    if (searchQuery.length > 0) {
-      setShowSuggestions(true);
+    let timeUpdateInterval;
+
+    const updateTime = () => {
+      try {
+        if (player.getCurrentTime && player.getDuration) {
+          const current = player.getCurrentTime();
+          const total = player.getDuration();
+          
+          if (typeof current === 'number' && !isNaN(current)) {
+            setCurrentTime(current);
+          }
+          
+          if (typeof total === 'number' && !isNaN(total)) {
+            setDuration(total);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating time:', error);
+      }
+    };
+
+    // Initial update
+    updateTime();
+
+    // Set up regular updates
+    timeUpdateInterval = setInterval(updateTime, 100);
+
+    return () => {
+      if (timeUpdateInterval) {
+        clearInterval(timeUpdateInterval);
+      }
+    };
+  }, [player]);
+
+  const handlePlayerReady = useCallback((playerInstance) => {
+    setPlayer(playerInstance);
+    
+    // Initialize times when player is ready
+    try {
+      if (playerInstance.getCurrentTime && playerInstance.getDuration) {
+        const current = playerInstance.getCurrentTime();
+        const total = playerInstance.getDuration();
+        
+        if (typeof current === 'number' && !isNaN(current)) {
+          setCurrentTime(current);
+        }
+        
+        if (typeof total === 'number' && !isNaN(total)) {
+          setDuration(total);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing times:', error);
     }
-  };
+  }, []);
 
+  const handleStateChange = useCallback((event) => {
+    // Ensure we have valid event data
+    if (!event || typeof event.data !== 'number' || !player) return;
+
+    const playerState = event.data;
+
+    // Update current time and duration
+    const updateTimes = () => {
+      try {
+        if (player.getCurrentTime && player.getDuration) {
+          const current = player.getCurrentTime();
+          const total = player.getDuration();
+          
+          if (typeof current === 'number' && !isNaN(current)) {
+            setCurrentTime(current);
+          }
+          
+          if (typeof total === 'number' && !isNaN(total)) {
+            setDuration(total);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating times:', error);
+      }
+    };
+
+    // Always update times when we get a state change
+    if (playerState !== window.YT.PlayerState.UNSTARTED) {
+      updateTimes();
+    }
+
+    switch (playerState) {
+      case window.YT.PlayerState.ENDED:
+        setIsPlaying(false);
+        setCurrentTime(duration);
+        handleNext();
+        break;
+      
+      case window.YT.PlayerState.PLAYING:
+        setIsPlaying(true);
+        break;
+      
+      case window.YT.PlayerState.PAUSED:
+        setIsPlaying(false);
+        break;
+      
+      case window.YT.PlayerState.BUFFERING:
+        // Keep the current playing state during buffering
+        break;
+      
+      case window.YT.PlayerState.CUED:
+        setIsPlaying(false);
+        setCurrentTime(0);
+        if (isPlayingRef.current) {
+          player.playVideo();
+        }
+        break;
+
+      case window.YT.PlayerState.UNSTARTED:
+        setIsPlaying(false);
+        setCurrentTime(0);
+        break;
+    }
+  }, [handleNext, player, duration]);
+  
+  // Search input handlers
   const handleSearchChange = (value) => {
     setSearchQuery(value);
     setShowSuggestions(value.length > 0);
   };
-
+  const handleSearchFocus = () => {
+    if (searchQuery.length > 0) setShowSuggestions(true);
+  };
   const handleSearchBlur = () => {
-    setTimeout(() => {
-      setShowSuggestions(false);
-    }, 200);
+    // Delay hiding to allow click events on suggestions to register
+    setTimeout(() => setShowSuggestions(false), 200);
   };
 
-  useEffect(() => {
-    if (playerReady && player) {
-      try {
-        player.playVideo();
-      } catch (error) {
-        console.log('Auto-play error:', error.message);
-      }
-    }
-  }, [playerReady, player, currentSongIndex]);
+  const togglePlaylist = () => setShowPlaylist(!showPlaylist);
 
   if (loading) {
     return (
-      <div className="loading">
-        <div className="loading-spinner"></div>
-      </div>
-    );
-  }
-
-  if (!songs.length) {
-    return (
-      <div className="app">
-        <div className="app-container">
-          <div className="player-container">
-            <div className="player-section">
-              <div className="main-search">
-                <SearchBar 
-                  searchQuery={searchQuery}
-                  onSearchChange={handleSearchChange}
-                  onFocus={handleSearchFocus}
-                  onBlur={handleSearchBlur}
-                />
-              </div>
-              <div className="no-songs-message">
-                No songs available. Try searching for some music.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div className="loading"><div className="loading-spinner"></div></div>
     );
   }
 
   return (
-    <div className="app">
+    <div className={`app ${showPlaylist ? 'playlist-visible' : ''}`}>
       <div className="app-container">
-        {/* Main Player */}
         <div className="player-container">
           <div className="player-section">
-            {/* Search Bar with Dropdown */}
             <div className="main-search">
               <SearchBar 
                 searchQuery={searchQuery}
@@ -376,105 +355,76 @@ function App() {
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
               />
-              
-              {/* Search Suggestions Dropdown */}
-              {showSuggestions && filteredSongs.length > 0 && (
+              {showSuggestions && (
                 <div className="search-dropdown">
-                  {filteredSongs.slice(0, 5).map((song) => (
-                    <div
-                      key={song.youtubeId}
-                      className="search-suggestion"
-                      onClick={() => handleSelectSong(song)}
-                    >
-                      <img src={song.thumbnail} alt={song.title} />
-                      <div className="suggestion-info">
-                        <div className="suggestion-title">{song.title}</div>
-                        <div className="suggestion-artist">{song.artist}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {filteredSongs.length > 5 && (
-                    <div className="show-all" onClick={togglePlaylist}>
-                      View all {filteredSongs.length} results
-                    </div>
+                  {isSearching ? (
+                    <div className="no-suggestions">Searching...</div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      {searchResults.slice(0, 5).map((song) => (
+                        <div key={song.youtubeId} className="search-suggestion" onClick={() => handleSelectSong(song)}>
+                          <img src={song.thumbnail} alt={song.title} />
+                          <div className="suggestion-info">
+                            <div className="suggestion-title">{song.title}</div>
+                            <div className="suggestion-artist">{song.artist}</div>
+                          </div>
+                        </div>
+                      ))}
+                      {searchResults.length > 5 && (
+                        <div className="show-all" onClick={() => { setShowPlaylist(true); setShowSuggestions(false); }}>
+                          View all {searchResults.length} results
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="no-suggestions">No songs found</div>
                   )}
-                </div>
-              )}
-
-              {showSuggestions && filteredSongs.length === 0 && searchQuery && (
-                <div className="search-dropdown">
-                  <div className="no-suggestions">No songs found</div>
                 </div>
               )}
             </div>
 
-            {currentSong && (
+            {!currentSong ? (
+              <div className="no-songs-message">
+                No songs in the queue. Try searching for some music.
+              </div>
+            ) : (
               <>
                 <div className="album-art-container">
-                  <div 
-                    className="album-art-glow" 
-                    style={{backgroundImage: `url(${currentSong.thumbnail})`}}
-                  ></div>
-                  <img 
-                    src={currentSong.thumbnail} 
-                    alt={currentSong.title} 
-                    className={`album-art ${isPlaying ? 'playing' : ''}`}
-                  />
+                  <div className="album-art-glow" style={{backgroundImage: `url(${currentSong.thumbnail})`}}></div>
+                  <img src={currentSong.thumbnail} alt={currentSong.title} className={`album-art ${isPlaying ? 'playing' : ''}`} />
                 </div>
-
                 <div className="song-details">
                   <h1>{currentSong.title}</h1>
                   <p>{currentSong.artist}</p>
                 </div>
+                <ProgressBar currentTime={currentTime} duration={duration} onSeek={handleSeek} />
+                <div className="controls-wrapper">
+                  <Controls isPlaying={isPlaying} onPlayPause={handlePlayPause} onPrevious={handlePrevious} onNext={handleNext} />
+                </div>
               </>
             )}
-
-            <ProgressBar
-              currentTime={currentTime}
-              duration={duration}
-              onSeek={handleSeek}
-            />
-
-            <div className="controls-wrapper">
-              <Controls
-                isPlaying={isPlaying}
-                onPlayPause={handlePlayPause}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-              />
-            </div>
-
+            
             <div className="queue-section">
-              {/* Queue button removed */}
+               <button className="queue-btn" onClick={togglePlaylist} title="Toggle Queue">
+                  <QueueIcon />
+                  <span>Queue</span>
+               </button>
             </div>
-
-            <Player
-              videoId={currentSong.youtubeId}
-              onReady={handlePlayerReady}
-              onStateChange={handleStateChange}
-            />
+            
+            {songs.length > 0 && currentSong && (
+                <Player videoId={currentSong.youtubeId} onReady={handlePlayerReady} onStateChange={handleStateChange} />
+            )}
           </div>
         </div>
 
-        {/* Playlist Panel */}
         <div className={`playlist-panel ${showPlaylist ? 'visible' : ''}`}>
           <div className="playlist-header">
             <h2>Queue</h2>
             <button className="close-playlist" onClick={togglePlaylist} title="Close">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-
-          <Playlist
-            songs={songs}
-            allSongs={songs}
-            currentSongId={currentSong.id}
-            onSelectSong={handleSelectSong}
-            searchQuery=""
-          />
+          <Playlist songs={songs} currentSongId={currentSong?.id} onSelectSong={(song) => setCurrentSongIndex(songs.findIndex(s => s.id === song.id))} />
         </div>
       </div>
     </div>
