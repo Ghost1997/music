@@ -16,22 +16,19 @@ const Playlist = ({ songs, allSongs, currentSongId, onSelectSong, searchQuery })
         </div>
       ) : (
         <div className="song-list">
-          <div className="playlist-info">
-            {searchQuery ? (
-              <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'} found</span>
-            ) : (
-              <span>{allSongs.length} {allSongs.length === 1 ? 'song' : 'songs'}</span>
-            )}
-          </div>
           {songs.map((song) => (
             <div
-              key={song.id}
-              className={`song-item ${currentSongId === song.id ? 'active' : ''}`}
+              key={song.youtubeId}
+              className={`song-item ${currentSongId === song.youtubeId ? 'active' : ''}`}
               onClick={() => onSelectSong(song)}
             >
               <div className="song-thumbnail-wrapper">
-                <img src={song.thumbnail} alt={song.title} className="song-thumbnail" />
-                {currentSongId === song.id && (
+                <img 
+                  src={song.thumbnail} 
+                  alt={song.title} 
+                  className="song-thumbnail" 
+                />
+                {currentSongId === song._id && (
                   <div className="playing-overlay">
                     <div className="playing-indicator">
                       <span></span>

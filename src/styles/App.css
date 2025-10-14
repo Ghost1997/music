@@ -1099,6 +1099,14 @@ html {
   animation: spin 1s linear infinite;
 }
 
+.no-songs-message {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin-top: 40px;
+  padding: 20px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

@@ -1,0 +1,187 @@
+{
+	"info": {
+		"_postman_id": "78a7b063-7a86-4a64-bdc5-ec1832757c75",
+		"name": "Music API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9283302"
+	},
+	"item": [
+		{
+			"name": "Get Music Video From Artist Name",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"artistName\": \"Justin Bieber\",\n  \"maxResults\": 200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/music/artist/fetch-save",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"music",
+						"artist",
+						"fetch-save"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Music Video From Channel",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"channelId\": \"UCDPM_n1atn2ijUwHd0NNRQw\",\n    \"maxResults\": 200\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/music/channel/fetch-save",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"music",
+						"channel",
+						"fetch-save"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Music Video From URL",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"videoUrl\": \"https://www.youtube.com/watch?v=tQ0yjYUFKAE\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/music/video/add",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"music",
+						"video",
+						"add"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Statistics",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"videoUrl\": \"https://www.youtube.com/watch?v=ulTyGJAVHig\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/music/stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"music",
+						"stats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Videos from Database",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/api/music/videos?artist=atif",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"api",
+						"music",
+						"videos"
+					],
+					"query": [
+						{
+							"key": "artist",
+							"value": "atif"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
