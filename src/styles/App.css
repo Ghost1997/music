@@ -79,19 +79,19 @@ body::before {
   position: relative;
   overflow: hidden;
   display: flex;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .player-container {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   position: relative;
   height: 100vh;
   overflow-y: auto;
   padding: 24px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .player-section {
@@ -104,14 +104,14 @@ body::before {
   padding: clamp(16px, 2vw, 24px);
   height: auto;
   max-height: 95vh;
+  margin: 0 auto;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .main-search {
   width: min(90%, 480px);
-  position: fixed;
-  top: clamp(16px, 4vh, 32px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  margin: 0 auto;
   z-index: 1000;
 }
 
