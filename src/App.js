@@ -7,7 +7,7 @@ import SearchBar from './components/SearchBar';
 import { songAPI } from './services/api';
 import { validateApiConnection } from './utils/apiValidator';
 import './styles/App.css';
-import { QueueIcon } from './components/Icons'; // Assuming you create an Icons component
+import { QueueIcon } from './components/Icons';
 
 function App() {
   const [songs, setSongs] = useState([]);
@@ -23,11 +23,27 @@ function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Use a ref to keep track of the playing state to avoid stale closures in callbacks
+  // Use refs to keep track of state to avoid stale closures
   const isPlayingRef = useRef(isPlaying);
+  const playerRef = useRef(player);
+  const songsRef = useRef(songs);
+  const currentSongIndexRef = useRef(currentSongIndex);
+
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
+  useEffect(() => {
+    songsRef.current = songs;
+  }, [songs]);
+
+  useEffect(() => {
+    currentSongIndexRef.current = currentSongIndex;
+  }, [currentSongIndex]);
 
   // Fetch all songs on mount
   useEffect(() => {
@@ -89,7 +105,6 @@ function App() {
         setIsSearching(true);
         const response = await songAPI.searchSongs(searchQuery);
         if (response.success) {
-          // Format search results to match song structure
           const formattedResults = response.data.map(song => ({
             id: song._id || song.youtubeId,
             youtubeId: song.youtubeId,
@@ -114,131 +129,131 @@ function App() {
 
   const currentSong = songs[currentSongIndex];
 
-  // Player Controls
+  // FIXED: handleNext with proper auto-play
   const handleNext = useCallback(() => {
-    if (!songs.length) return;
-    const nextIndex = (currentSongIndex + 1) % songs.length;
+    if (!songsRef.current.length) return;
+    const nextIndex = (currentSongIndexRef.current + 1) % songsRef.current.length;
     setCurrentSongIndex(nextIndex);
-  }, [currentSongIndex, songs.length]);
+    setIsPlaying(true); // Auto-play next song
+  }, []);
   
-  const handlePrevious = () => {
-    if (!songs.length) return;
-    const prevIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+  // FIXED: handlePrevious with useCallback
+  const handlePrevious = useCallback(() => {
+    if (!songsRef.current.length) return;
+    const prevIndex = (currentSongIndexRef.current - 1 + songsRef.current.length) % songsRef.current.length;
     setCurrentSongIndex(prevIndex);
-  };
+  }, []);
 
-  const handlePlayPause = () => {
-    if (!player || !currentSong) return;
+  // FIXED: handlePlayPause with better error handling for mobile
+  const handlePlayPause = useCallback(() => {
+    if (!playerRef.current || !currentSong) return;
     
     try {
-      // Get the actual player state
-      const playerState = player.getPlayerState();
+      const playerState = playerRef.current.getPlayerState();
       
-      if (playerState === window.YT.PlayerState.PLAYING) {
-        player.pauseVideo();
+      // State 1 = Playing, State 2 = Paused
+      if (playerState === 1) {
+        playerRef.current.pauseVideo();
         setIsPlaying(false);
       } else {
-        player.playVideo();
+        playerRef.current.playVideo();
         setIsPlaying(true);
       }
     } catch (error) {
       console.error('Error in handlePlayPause:', error);
+      // Fallback for mobile
+      try {
+        if (isPlayingRef.current) {
+          playerRef.current.pauseVideo();
+          setIsPlaying(false);
+        } else {
+          playerRef.current.playVideo();
+          setIsPlaying(true);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback playPause failed:', fallbackError);
+      }
     }
-  };
+  }, [currentSong]);
   
-  const handleSeek = (time) => {
-    if (player && player.seekTo) {
-      player.seekTo(time);
-      setCurrentTime(time);
+  // FIXED: handleSeek with validation and proper seeking
+  const handleSeek = useCallback((time) => {
+    if (playerRef.current && playerRef.current.seekTo && typeof time === 'number') {
+      try {
+        const validTime = Math.max(0, Math.min(time, duration || 0));
+        playerRef.current.seekTo(validTime, true); // allowSeekAhead = true
+        setCurrentTime(validTime);
+      } catch (error) {
+        console.error('Error seeking:', error);
+      }
     }
-  };
+  }, [duration]);
   
   // Song Selection Logic
-  const handleSelectSong = (songToPlay) => {
+  const handleSelectSong = useCallback((songToPlay) => {
     const songIndex = songs.findIndex(s => s.youtubeId === songToPlay.youtubeId);
 
     if (songIndex !== -1) {
-      // Song is already in the queue, just switch to it
       setCurrentSongIndex(songIndex);
     } else {
-      // Song is not in the queue, add it and switch to it
       const newSongs = [...songs, songToPlay];
       setSongs(newSongs);
       setCurrentSongIndex(newSongs.length - 1);
     }
 
-    // Always attempt to play the newly selected song
     setIsPlaying(true); 
-    
-    // Clear search and hide dropdown
     setShowSuggestions(false);
     setSearchQuery('');
-  };
+  }, [songs]);
 
-  // Effect to control the YouTube player instance
+  // FIXED: Effect to control the YouTube player with proper autoplay
   useEffect(() => {
-    if (player && currentSong) {
+    if (playerRef.current && currentSong) {
       try {
         if (isPlayingRef.current) {
-          // If we're meant to be playing, load and play the video
-          player.loadVideoById(currentSong.youtubeId);
-          setIsPlaying(true);
+          playerRef.current.loadVideoById(currentSong.youtubeId);
         } else {
-          // If we're not meant to be playing, just cue the video
-          player.cueVideoById(currentSong.youtubeId);
-          setIsPlaying(false);
+          playerRef.current.cueVideoById(currentSong.youtubeId);
         }
       } catch (error) {
         console.error('Error loading video:', error);
-        // Fallback to just cuing the video
-        player.cueVideoById(currentSong.youtubeId);
-        setIsPlaying(false);
       }
     }
-  }, [currentSong, player]);
+  }, [currentSong]);
 
   // Progress bar update
   useEffect(() => {
-    if (!player) return undefined;
-
-    let timeUpdateInterval;
+    if (!playerRef.current) return;
 
     const updateTime = () => {
       try {
-        if (player.getCurrentTime && player.getDuration) {
-          const current = player.getCurrentTime();
-          const total = player.getDuration();
+        if (playerRef.current && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
+          const current = playerRef.current.getCurrentTime();
+          const total = playerRef.current.getDuration();
           
           if (typeof current === 'number' && !isNaN(current)) {
             setCurrentTime(current);
           }
           
-          if (typeof total === 'number' && !isNaN(total)) {
+          if (typeof total === 'number' && !isNaN(total) && total > 0) {
             setDuration(total);
           }
         }
       } catch (error) {
-        console.error('Error updating time:', error);
+        // Silently fail to avoid console spam
       }
     };
 
-    // Initial update
-    updateTime();
-
-    // Set up regular updates
-    timeUpdateInterval = setInterval(updateTime, 100);
+    const timeUpdateInterval = setInterval(updateTime, 100);
 
     return () => {
-      if (timeUpdateInterval) {
-        clearInterval(timeUpdateInterval);
-      }
+      clearInterval(timeUpdateInterval);
     };
   }, [player]);
 
   const handlePlayerReady = useCallback((playerInstance) => {
     setPlayer(playerInstance);
     
-    // Initialize times when player is ready
     try {
       if (playerInstance.getCurrentTime && playerInstance.getDuration) {
         const current = playerInstance.getCurrentTime();
@@ -248,7 +263,7 @@ function App() {
           setCurrentTime(current);
         }
         
-        if (typeof total === 'number' && !isNaN(total)) {
+        if (typeof total === 'number' && !isNaN(total) && total > 0) {
           setDuration(total);
         }
       }
@@ -257,81 +272,85 @@ function App() {
     }
   }, []);
 
+  // FIXED: handleStateChange with proper autoplay on song end
   const handleStateChange = useCallback((event) => {
-    // Ensure we have valid event data
-    if (!event || typeof event.data !== 'number' || !player) return;
+    if (!event || typeof event.data !== 'number') return;
 
     const playerState = event.data;
 
-    // Update current time and duration
-    const updateTimes = () => {
+    // Update times on state change
+    if (playerRef.current && playerState !== -1) { // Not UNSTARTED
       try {
-        if (player.getCurrentTime && player.getDuration) {
-          const current = player.getCurrentTime();
-          const total = player.getDuration();
-          
-          if (typeof current === 'number' && !isNaN(current)) {
-            setCurrentTime(current);
-          }
-          
-          if (typeof total === 'number' && !isNaN(total)) {
-            setDuration(total);
-          }
+        const current = playerRef.current.getCurrentTime();
+        const total = playerRef.current.getDuration();
+        
+        if (typeof current === 'number' && !isNaN(current)) {
+          setCurrentTime(current);
+        }
+        
+        if (typeof total === 'number' && !isNaN(total) && total > 0) {
+          setDuration(total);
         }
       } catch (error) {
-        console.error('Error updating times:', error);
+        // Silently fail
       }
-    };
-
-    // Always update times when we get a state change
-    if (playerState !== window.YT.PlayerState.UNSTARTED) {
-      updateTimes();
     }
 
     switch (playerState) {
-      case window.YT.PlayerState.ENDED:
+      case 0: // ENDED
         setIsPlaying(false);
-        setCurrentTime(duration);
-        handleNext();
+        // Auto-play next song
+        setTimeout(() => {
+          handleNext();
+        }, 500); // Small delay for smooth transition
         break;
       
-      case window.YT.PlayerState.PLAYING:
+      case 1: // PLAYING
         setIsPlaying(true);
         break;
       
-      case window.YT.PlayerState.PAUSED:
+      case 2: // PAUSED
         setIsPlaying(false);
         break;
       
-      case window.YT.PlayerState.BUFFERING:
-        // Keep the current playing state during buffering
+      case 3: // BUFFERING
+        // Keep current playing state
         break;
       
-      case window.YT.PlayerState.CUED:
+      case 5: // CUED
         setIsPlaying(false);
         setCurrentTime(0);
-        if (isPlayingRef.current) {
-          player.playVideo();
+        // If we should be playing, start playback
+        if (isPlayingRef.current && playerRef.current) {
+          setTimeout(() => {
+            if (playerRef.current) {
+              playerRef.current.playVideo();
+            }
+          }, 100);
         }
         break;
 
-      case window.YT.PlayerState.UNSTARTED:
+      case -1: // UNSTARTED
         setIsPlaying(false);
         setCurrentTime(0);
         break;
+        
+      default:
+        break;
     }
-  }, [handleNext, player, duration]);
+  }, [handleNext]);
   
   // Search input handlers
   const handleSearchChange = (value) => {
     setSearchQuery(value);
     setShowSuggestions(value.length > 0);
   };
+  
   const handleSearchFocus = () => {
     if (searchQuery.length > 0) setShowSuggestions(true);
   };
+  
   const handleSearchBlur = () => {
-    // Delay hiding to allow click events on suggestions to register
     setTimeout(() => setShowSuggestions(false), 200);
   };
 
