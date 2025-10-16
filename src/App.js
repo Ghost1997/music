@@ -4,6 +4,7 @@ import Controls from './components/Controls';
 import ProgressBar from './components/ProgressBar';
 import Playlist from './components/Playlist';
 import SearchBar from './components/SearchBar';
+import InstallPrompt from './components/InstallPrompt';
 import { songAPI } from './services/api';
 import { validateApiConnection } from './utils/apiValidator';
 import './styles/App.css';
@@ -22,8 +23,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [savingId, setSavingId] = useState(null);
 
-  // Use refs to keep track of state to avoid stale closures
   const isPlayingRef = useRef(isPlaying);
   const playerRef = useRef(player);
   const songsRef = useRef(songs);
@@ -45,7 +46,6 @@ function App() {
     currentSongIndexRef.current = currentSongIndex;
   }, [currentSongIndex]);
 
-  // Fetch all songs on mount
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -76,6 +76,7 @@ function App() {
           title: song.title,
           artist: song.artist.split('|')[0].trim(),
           thumbnail: song.thumbnail,
+          inDatabase: true
         }));
         setSongs(formattedSongs);
         if (formattedSongs.length > 0) {
@@ -93,7 +94,6 @@ function App() {
     }
   };
 
-  // Debounced search
   useEffect(() => {
     if (searchQuery.trim().length === 0) {
       setSearchResults([]);
@@ -103,7 +103,7 @@ function App() {
     const timeoutId = setTimeout(async () => {
       try {
         setIsSearching(true);
-        const response = await songAPI.searchSongs(searchQuery);
+        const response = await songAPI.hybridSearch(searchQuery);
         if (response.success) {
           const formattedResults = response.data.map(song => ({
             id: song._id || song.youtubeId,
@@ -111,6 +111,21 @@ function App() {
             title: song.title,
             artist: song.artist.split('|')[0].trim(),
             thumbnail: song.thumbnail,
+            inDatabase: song.inDatabase,
+            source: song.source,
+            url: song.url,
+            channelId: song.channelId,
+            channelName: song.channelName,
+            duration: song.duration,
+            durationSeconds: song.durationSeconds,
+            publishedAt: song.publishedAt,
+            viewCount: song.viewCount,
+            likeCount: song.likeCount,
+            commentCount: song.commentCount,
+            description: song.description,
+            tags: song.tags,
+            categoryId: song.categoryId,
+            thumbnails: song.thumbnails
           }));
           setSearchResults(formattedResults);
           setShowSuggestions(true);
@@ -129,29 +144,25 @@ function App() {
 
   const currentSong = songs[currentSongIndex];
 
-  // FIXED: handleNext with proper auto-play
   const handleNext = useCallback(() => {
     if (!songsRef.current.length) return;
     const nextIndex = (currentSongIndexRef.current + 1) % songsRef.current.length;
     setCurrentSongIndex(nextIndex);
-    setIsPlaying(true); // Auto-play next song
+    setIsPlaying(true);
   }, []);
   
-  // FIXED: handlePrevious with useCallback
   const handlePrevious = useCallback(() => {
     if (!songsRef.current.length) return;
     const prevIndex = (currentSongIndexRef.current - 1 + songsRef.current.length) % songsRef.current.length;
     setCurrentSongIndex(prevIndex);
   }, []);
 
-  // FIXED: handlePlayPause with better error handling for mobile
   const handlePlayPause = useCallback(() => {
     if (!playerRef.current || !currentSong) return;
     
     try {
       const playerState = playerRef.current.getPlayerState();
       
-      // State 1 = Playing, State 2 = Paused
       if (playerState === 1) {
         playerRef.current.pauseVideo();
         setIsPlaying(false);
@@ -161,7 +172,6 @@ function App() {
       }
     } catch (error) {
       console.error('Error in handlePlayPause:', error);
-      // Fallback for mobile
       try {
         if (isPlayingRef.current) {
           playerRef.current.pauseVideo();
@@ -176,12 +186,11 @@ function App() {
     }
   }, [currentSong]);
   
-  // FIXED: handleSeek with validation and proper seeking
   const handleSeek = useCallback((time) => {
     if (playerRef.current && playerRef.current.seekTo && typeof time === 'number') {
       try {
         const validTime = Math.max(0, Math.min(time, duration || 0));
-        playerRef.current.seekTo(validTime, true); // allowSeekAhead = true
+        playerRef.current.seekTo(validTime, true);
         setCurrentTime(validTime);
       } catch (error) {
         console.error('Error seeking:', error);
@@ -189,7 +198,30 @@ function App() {
     }
   }, [duration]);
   
-  // Song Selection Logic
+  const handleSaveSong = async (song) => {
+    try {
+      setSavingId(song.youtubeId);
+      const response = await songAPI.saveSelectedSong(song);
+      
+      if (response.success) {
+        setSearchResults(prev => 
+          prev.map(s => 
+            s.youtubeId === song.youtubeId 
+              ? { ...s, inDatabase: true, source: 'database' }
+              : s
+          )
+        );
+        console.log('Song saved successfully');
+      } else {
+        console.error('Failed to save song:', response.error);
+      }
+    } catch (error) {
+      console.error('Error saving song:', error);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const handleSelectSong = useCallback((songToPlay) => {
     const songIndex = songs.findIndex(s => s.youtubeId === songToPlay.youtubeId);
 
@@ -206,7 +238,6 @@ function App() {
     setSearchQuery('');
   }, [songs]);
 
-  // FIXED: Effect to control the YouTube player with proper autoplay
   useEffect(() => {
     if (playerRef.current && currentSong) {
       try {
@@ -221,7 +252,6 @@ function App() {
     }
   }, [currentSong]);
 
-  // Progress bar update
   useEffect(() => {
     if (!playerRef.current) return;
 
@@ -240,7 +270,7 @@ function App() {
           }
         }
       } catch (error) {
-        // Silently fail to avoid console spam
+        // Silently fail
       }
     };
 
@@ -272,14 +302,12 @@ function App() {
     }
   }, []);
 
-  // FIXED: handleStateChange with proper autoplay on song end
   const handleStateChange = useCallback((event) => {
     if (!event || typeof event.data !== 'number') return;
 
     const playerState = event.data;
 
-    // Update times on state change
-    if (playerRef.current && playerState !== -1) { // Not UNSTARTED
+    if (playerRef.current && playerState !== -1) {
       try {
         const current = playerRef.current.getCurrentTime();
         const total = playerRef.current.getDuration();
@@ -297,30 +325,27 @@ function App() {
     }
 
     switch (playerState) {
-      case 0: // ENDED
+      case 0:
         setIsPlaying(false);
-        // Auto-play next song
         setTimeout(() => {
           handleNext();
-        }, 500); // Small delay for smooth transition
+        }, 500);
         break;
       
-      case 1: // PLAYING
+      case 1:
         setIsPlaying(true);
         break;
       
-      case 2: // PAUSED
+      case 2:
         setIsPlaying(false);
         break;
       
-      case 3: // BUFFERING
-        // Keep current playing state
+      case 3:
         break;
       
-      case 5: // CUED
+      case 5:
         setIsPlaying(false);
         setCurrentTime(0);
-        // If we should be playing, start playback
         if (isPlayingRef.current && playerRef.current) {
           setTimeout(() => {
             if (playerRef.current) {
@@ -330,7 +355,7 @@ function App() {
         }
         break;
 
-      case -1: // UNSTARTED
+      case -1:
         setIsPlaying(false);
         setCurrentTime(0);
         break;
@@ -340,7 +365,6 @@ function App() {
     }
   }, [handleNext]);
   
-  // Search input handlers
   const handleSearchChange = (value) => {
     setSearchQuery(value);
     setShowSuggestions(value.length > 0);
@@ -364,6 +388,7 @@ function App() {
 
   return (
     <div className={`app ${showPlaylist ? 'playlist-visible' : ''}`}>
+      <InstallPrompt />
       <div className="app-container">
         <div className="player-container">
           <div className="player-section">
@@ -381,12 +406,30 @@ function App() {
                   ) : searchResults.length > 0 ? (
                     <>
                       {searchResults.slice(0, 5).map((song) => (
-                        <div key={song.youtubeId} className="search-suggestion" onClick={() => handleSelectSong(song)}>
-                          <img src={song.thumbnail} alt={song.title} />
-                          <div className="suggestion-info">
-                            <div className="suggestion-title">{song.title}</div>
-                            <div className="suggestion-artist">{song.artist}</div>
+                        <div key={song.youtubeId} className="search-suggestion-wrapper">
+                          <div className="search-suggestion" onClick={() => handleSelectSong(song)}>
+                            <img src={song.thumbnail} alt={song.title} />
+                            <div className="suggestion-info">
+                              <div className="suggestion-title">{song.title}</div>
+                              <div className="suggestion-artist">{song.artist}</div>
+                              <div className={`suggestion-source ${song.source === 'database' ? 'database' : 'youtube'}`}>
+                                {song.source === 'database' ? 'In Library' : 'From YouTube'}
+                              </div>
+                            </div>
                           </div>
+                          {song.source !== 'database' && (
+                            <button 
+                              className="save-song-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveSong(song);
+                              }}
+                              disabled={savingId === song.youtubeId}
+                              title="Add to Library"
+                            >
+                              {savingId === song.youtubeId ? '...' : '+'}
+                            </button>
+                          )}
                         </div>
                       ))}
                       {searchResults.length > 5 && (

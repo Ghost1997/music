@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/music';
 
-console.log('API Base URL:', API_BASE_URL); // Debug log
+console.log('API Base URL:', API_BASE_URL);
 
 const getBestThumbnail = (video) => {
   if (video.thumbnails) {
@@ -12,6 +12,11 @@ const getBestThumbnail = (video) => {
   }
   return video.thumbnail;
 };
+
+const formatSongData = (video) => ({
+  ...video,
+  thumbnail: getBestThumbnail(video)
+});
 
 export const songAPI = {
   getSongDetails: async (youtubeId) => {
@@ -32,10 +37,7 @@ export const songAPI = {
       if (data.success && data.video) {
         return { 
           success: true, 
-          data: {
-            ...data.video,
-            thumbnail: getBestThumbnail(data.video)
-          }
+          data: formatSongData(data.video)
         };
       }
       throw new Error('Invalid response format');
@@ -64,11 +66,8 @@ export const songAPI = {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
       
-      if (data.success) {
-        data.data = data.data.map(video => ({
-          ...video,
-          thumbnail: getBestThumbnail(video)
-        }));
+      if (data.success && Array.isArray(data.data)) {
+        data.data = data.data.map(formatSongData);
       }
       
       return data;
@@ -83,11 +82,8 @@ export const songAPI = {
       const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       
-      if (data.success) {
-        data.data = data.data.map(video => ({
-          ...video,
-          thumbnail: getBestThumbnail(video)
-        }));
+      if (data.success && Array.isArray(data.data)) {
+        data.data = data.data.map(formatSongData);
       }
       
       return data;
@@ -97,13 +93,68 @@ export const songAPI = {
     }
   },
 
+  // NEW: Hybrid search (database + YouTube)
+  hybridSearch: async (query) => {
+    try {
+      console.log('Hybrid search for:', query);
+      const response = await fetch(`${API_BASE_URL}/search/hybrid?q=${encodeURIComponent(query)}&limit=20`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      if (data.success && Array.isArray(data.data)) {
+        data.data = data.data.map(formatSongData);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error in hybrid search:', error);
+      return { success: false, error: error.message, data: [] };
+    }
+  },
+
+  // NEW: Save selected song to database
+  saveSelectedSong: async (song) => {
+    try {
+      console.log('Saving song:', song.youtubeId);
+      const response = await fetch(`${API_BASE_URL}/search/save-selected`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(song)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error saving song:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
   getSongByYoutubeId: async (youtubeId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/video/${youtubeId}`);
       const data = await response.json();
       
       if (data.success && data.video) {
-        data.video.thumbnail = getBestThumbnail(data.video);
+        data.video = formatSongData(data.video);
       }
       
       return data;
@@ -121,6 +172,29 @@ export const songAPI = {
     } catch (error) {
       console.error('Error fetching stats:', error);
       throw error;
+    }
+  },
+
+  deleteSong: async (youtubeId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/video/${youtubeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error deleting song:', error);
+      return { success: false, error: error.message };
     }
   }
 };
