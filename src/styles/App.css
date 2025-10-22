@@ -1346,3 +1346,114 @@ html {
     font-size: 18px;
   }
 }
+/* Add these improvements to your existing App.css */
+
+/* Improve touch targets for mobile */
+.control-btn,
+.play-btn,
+.queue-btn,
+.close-playlist,
+.save-song-btn,
+.clear-search {
+  -webkit-tap-highlight-color: rgba(139, 92, 246, 0.2);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Prevent double-tap zoom on controls */
+.controls,
+.controls-wrapper,
+.queue-section {
+  touch-action: manipulation;
+}
+
+/* Better touch feedback */
+.control-btn:active,
+.play-btn:active {
+  transform: scale(0.92) !important;
+}
+
+/* Prevent iOS text selection on buttons */
+button,
+.song-item,
+.search-suggestion {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* This targets iOS Safari */
+  
+  .control-btn,
+  .play-btn {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  /* Prevent iOS from dimming the player when locked */
+  .player-section {
+    -webkit-user-select: none;
+  }
+  
+  /* Better touch handling for progress bar */
+  .progress-slider {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .progress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.5);
+  }
+}
+
+/* Larger touch targets for mobile */
+@media (max-width: 768px) {
+  .control-btn {
+    min-width: 56px;
+    min-height: 56px;
+  }
+  
+  .play-btn {
+    min-width: 76px;
+    min-height: 76px;
+  }
+  
+  /* Add padding to clickable areas */
+  .search-suggestion,
+  .song-item {
+    padding: 16px 14px;
+  }
+}
+
+/* Prevent scroll chaining on iOS */
+.playlist-panel,
+.search-dropdown {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Better active states for iOS */
+@media (hover: none) and (pointer: coarse) {
+  .control-btn:active {
+    background: var(--card-hover);
+    transform: scale(0.92);
+  }
+  
+  .play-btn:active {
+    transform: scale(0.92);
+  }
+  
+  .song-item:active,
+  .search-suggestion:active {
+    background: var(--card-hover);
+  }
+}

@@ -46,6 +46,28 @@ function App() {
     currentSongIndexRef.current = currentSongIndex;
   }, [currentSongIndex]);
 
+  // Prevent iOS from pausing on visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isPlayingRef.current && playerRef.current) {
+        // Keep playing in background
+        try {
+          const playerState = playerRef.current.getPlayerState();
+          if (playerState === 2) { // If paused
+            playerRef.current.playVideo();
+          }
+        } catch (error) {
+          console.error('Error handling visibility change:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -155,6 +177,7 @@ function App() {
     if (!songsRef.current.length) return;
     const prevIndex = (currentSongIndexRef.current - 1 + songsRef.current.length) % songsRef.current.length;
     setCurrentSongIndex(prevIndex);
+    setIsPlaying(true); // Auto-play when going to previous
   }, []);
 
   const handlePlayPause = useCallback(() => {
@@ -163,15 +186,16 @@ function App() {
     try {
       const playerState = playerRef.current.getPlayerState();
       
-      if (playerState === 1) {
+      if (playerState === 1) { // Playing
         playerRef.current.pauseVideo();
         setIsPlaying(false);
-      } else {
+      } else { // Paused, buffering, or cued
         playerRef.current.playVideo();
         setIsPlaying(true);
       }
     } catch (error) {
       console.error('Error in handlePlayPause:', error);
+      // Fallback based on current state
       try {
         if (isPlayingRef.current) {
           playerRef.current.pauseVideo();
@@ -325,25 +349,26 @@ function App() {
     }
 
     switch (playerState) {
-      case 0:
+      case 0: // Ended
         setIsPlaying(false);
         setTimeout(() => {
           handleNext();
         }, 500);
         break;
       
-      case 1:
+      case 1: // Playing
         setIsPlaying(true);
         break;
       
-      case 2:
+      case 2: // Paused
         setIsPlaying(false);
         break;
       
-      case 3:
+      case 3: // Buffering
+        // Keep playing state as is
         break;
       
-      case 5:
+      case 5: // Cued
         setIsPlaying(false);
         setCurrentTime(0);
         if (isPlayingRef.current && playerRef.current) {
@@ -355,7 +380,7 @@ function App() {
         }
         break;
 
-      case -1:
+      case -1: // Unstarted
         setIsPlaying(false);
         setCurrentTime(0);
         break;
