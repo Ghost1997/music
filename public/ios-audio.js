@@ -2,23 +2,38 @@
 (function() {
   // Enable background audio for iOS Safari
   try {
-    if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+    if ((typeof window !== 'undefined') && (typeof (window.AudioContext || window.webkitAudioContext) !== 'undefined')) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContext();
-
-      // iOS requires user interaction to start audio
-      const resumeAudioContext = () => {
-        if (audioContext.state === 'suspended') {
-          audioContext.resume();
+      // Use a single shared AudioContext if not already present
+      if (!window.__sharedAudioContext) {
+        try {
+          window.__sharedAudioContext = new AudioContext();
+        } catch (err) {
+          console.warn('Could not create shared AudioContext:', err);
         }
-      };
+      }
 
-      document.addEventListener('touchstart', resumeAudioContext);
-      document.addEventListener('touchend', resumeAudioContext);
-      document.addEventListener('click', resumeAudioContext);
+      const audioContext = window.__sharedAudioContext;
+      if (audioContext) {
+        // iOS requires user interaction to start audio
+        const resumeAudioContext = () => {
+          try {
+            if (audioContext.state === 'suspended') {
+              audioContext.resume();
+            }
+          } catch (err) {
+            // ignore
+          }
+        };
+
+        document.addEventListener('touchstart', resumeAudioContext, { passive: true });
+        document.addEventListener('touchend', resumeAudioContext, { passive: true });
+        document.addEventListener('click', resumeAudioContext, { passive: true });
+      }
     }
   } catch (e) {
-    console.error('Web Audio API is not supported in this browser');
+    // Non-fatal, continue without iOS audio helpers
+    console.warn('Web Audio API helper not available:', e.message || e);
   }
 
   // Handle iOS audio session

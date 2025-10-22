@@ -27,13 +27,14 @@ html, body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   background: var(--darker-bg);
   color: var(--text-primary);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
+  /* Allow normal scrolling and interaction on mobile */
+  overflow: auto;
 }
 
 body::before {
@@ -64,13 +65,11 @@ body::before {
 }
 
 .app {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   display: flex;
-  overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
+  overflow: hidden; /* keep layout overflow hidden but allow internal scroll areas */
+  position: relative;
 }
 
 .app-container {
@@ -88,10 +87,11 @@ body::before {
   flex-direction: column;
   align-items: center;
   position: relative;
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
   padding: 24px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-overflow-scrolling: touch; /* enable momentum scrolling on iOS */
 }
 
 .player-section {
@@ -1358,6 +1358,7 @@ html {
   -webkit-tap-highlight-color: rgba(139, 92, 246, 0.2);
   touch-action: manipulation;
   user-select: none;
+  -ms-user-select: none;
   -webkit-user-select: none;
 }
 
@@ -1376,9 +1377,11 @@ html {
 
 /* Prevent iOS text selection on buttons */
 button,
-.song-item,
-.search-suggestion {
+song-item,
+search-suggestion {
   -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   -webkit-touch-callout: none;
 }
 
@@ -1395,6 +1398,8 @@ button,
   /* Prevent iOS from dimming the player when locked */
   .player-section {
     -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
   
   /* Better touch handling for progress bar */
