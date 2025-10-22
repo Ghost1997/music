@@ -1,0 +1,95 @@
+/* Progress Bar Component Styles */
+
+.progress-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 6px;
+}
+
+.time {
+  font-size: 14px;
+  min-width: 44px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--card-bg);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.progress-bar:hover {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 20px var(--glow);
+}
+
+.progress-bar:hover .progress-fill {
+  box-shadow: 0 0 25px var(--glow);
+}
+
+.progress-slider {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 28px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* iOS specific progress slider styling */
+@supports (-webkit-touch-callout: none) {
+  .progress-slider {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .progress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.5);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .progress-container {
+    gap: 12px;
+  }
+
+  .time {
+    font-size: 13px;
+    min-width: 40px;
+  }
+}

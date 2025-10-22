@@ -1,0 +1,146 @@
+/* Controls Component Styles */
+
+.controls-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  touch-action: manipulation;
+}
+
+.control-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  -webkit-tap-highlight-color: rgba(139, 92, 246, 0.2);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.control-btn:hover {
+  background: var(--card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.control-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.play-btn {
+  width: 76px;
+  height: 76px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  box-shadow: 0 8px 30px var(--glow);
+}
+
+.play-btn:hover {
+  box-shadow: 0 12px 40px var(--glow);
+  transform: translateY(-3px) scale(1.08);
+}
+
+.play-btn:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .control-btn {
+    width: 52px;
+    height: 52px;
+    min-width: 56px;
+    min-height: 56px;
+  }
+
+  .play-btn {
+    width: 70px;
+    height: 70px;
+    min-width: 76px;
+    min-height: 76px;
+  }
+
+  .controls {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .control-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .play-btn {
+    width: 64px;
+    height: 64px;
+  }
+
+  .controls {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .control-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .play-btn {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .control-btn,
+  .play-btn {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* Better active states for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .control-btn:active {
+    background: var(--card-hover);
+    transform: scale(0.92);
+  }
+  
+  .play-btn:active {
+    transform: scale(0.92);
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  .control-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .play-btn {
+    width: 56px;
+    height: 56px;
+  }
+}

@@ -1,19 +1,42 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import '../styles/Controls.css';
 
 const Controls = ({ isPlaying, onPlayPause, onPrevious, onNext }) => {
-  // Prevent default behavior and handle both touch and click
-  const handleButtonClick = (callback) => (e) => {
+  const touchStartRef = useRef(null);
+  
+  // Improved touch handling to prevent double-tap and ensure single action
+  const handleTouchStart = (callback) => (e) => {
+    touchStartRef.current = { callback, time: Date.now() };
+  };
+
+  const handleTouchEnd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    callback();
+    
+    if (touchStartRef.current && Date.now() - touchStartRef.current.time < 500) {
+      touchStartRef.current.callback();
+      touchStartRef.current = null;
+    }
+  };
+
+  // Handle click for desktop
+  const handleClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Only trigger on click if not a touch device
+    if (!touchStartRef.current) {
+      callback();
+    }
   };
 
   return (
     <div className="controls">
       <button 
         className="control-btn" 
-        onClick={handleButtonClick(onPrevious)}
-        onTouchEnd={handleButtonClick(onPrevious)}
+        onClick={handleClick(onPrevious)}
+        onTouchStart={handleTouchStart(onPrevious)}
+        onTouchEnd={handleTouchEnd}
         title="Previous"
         aria-label="Previous track"
       >
@@ -25,8 +48,9 @@ const Controls = ({ isPlaying, onPlayPause, onPrevious, onNext }) => {
       
       <button 
         className="control-btn play-btn" 
-        onClick={handleButtonClick(onPlayPause)}
-        onTouchEnd={handleButtonClick(onPlayPause)}
+        onClick={handleClick(onPlayPause)}
+        onTouchStart={handleTouchStart(onPlayPause)}
+        onTouchEnd={handleTouchEnd}
         title={isPlaying ? 'Pause' : 'Play'}
         aria-label={isPlaying ? 'Pause' : 'Play'}
       >
@@ -44,8 +68,9 @@ const Controls = ({ isPlaying, onPlayPause, onPrevious, onNext }) => {
       
       <button 
         className="control-btn" 
-        onClick={handleButtonClick(onNext)}
-        onTouchEnd={handleButtonClick(onNext)}
+        onClick={handleClick(onNext)}
+        onTouchStart={handleTouchStart(onNext)}
+        onTouchEnd={handleTouchEnd}
         title="Next"
         aria-label="Next track"
       >

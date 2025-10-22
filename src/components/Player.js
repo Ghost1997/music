@@ -44,47 +44,90 @@ const Player = ({ videoId, onReady, onStateChange }) => {
         ]
       });
 
+      // Play handler
       navigator.mediaSession.setActionHandler('play', () => {
-        if (playerInstance && playerInstance.playVideo) {
-          playerInstance.playVideo();
+        try {
+          if (playerInstance && playerInstance.playVideo) {
+            playerInstance.playVideo();
+            requestWakeLock();
+          }
+        } catch (err) {
+          console.error('Error in play handler:', err);
         }
       });
       
+      // Pause handler
       navigator.mediaSession.setActionHandler('pause', () => {
-        if (playerInstance && playerInstance.pauseVideo) {
-          playerInstance.pauseVideo();
+        try {
+          if (playerInstance && playerInstance.pauseVideo) {
+            playerInstance.pauseVideo();
+            releaseWakeLock();
+          }
+        } catch (err) {
+          console.error('Error in pause handler:', err);
         }
       });
       
+      // Previous track handler
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        if (onStateChange) {
-          onStateChange({ data: -2 });
+        try {
+          if (onStateChange) {
+            onStateChange({ data: -2 });
+          }
+        } catch (err) {
+          console.error('Error in previous handler:', err);
         }
       });
       
+      // Next track handler
       navigator.mediaSession.setActionHandler('nexttrack', () => {
-        if (onStateChange) {
-          onStateChange({ data: 0 });
+        try {
+          if (onStateChange) {
+            onStateChange({ data: 0 });
+          }
+        } catch (err) {
+          console.error('Error in next handler:', err);
         }
       });
 
-      // Seek handlers for iOS
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-        if (playerInstance && playerInstance.getCurrentTime) {
-          const skipTime = details.seekOffset || 10;
-          const currentTime = playerInstance.getCurrentTime();
-          playerInstance.seekTo(Math.max(0, currentTime - skipTime));
-        }
-      });
+      // Seek backward handler
+      try {
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          if (playerInstance && playerInstance.getCurrentTime && playerInstance.seekTo) {
+            const skipTime = details.seekOffset || 10;
+            const currentTime = playerInstance.getCurrentTime();
+            playerInstance.seekTo(Math.max(0, currentTime - skipTime), true);
+          }
+        });
+      } catch (err) {
+        console.log('Seek backward not supported');
+      }
 
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
-        if (playerInstance && playerInstance.getCurrentTime && playerInstance.getDuration) {
-          const skipTime = details.seekOffset || 10;
-          const currentTime = playerInstance.getCurrentTime();
-          const duration = playerInstance.getDuration();
-          playerInstance.seekTo(Math.min(duration, currentTime + skipTime));
-        }
-      });
+      // Seek forward handler
+      try {
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          if (playerInstance && playerInstance.getCurrentTime && playerInstance.getDuration && playerInstance.seekTo) {
+            const skipTime = details.seekOffset || 10;
+            const currentTime = playerInstance.getCurrentTime();
+            const duration = playerInstance.getDuration();
+            playerInstance.seekTo(Math.min(duration, currentTime + skipTime), true);
+          }
+        });
+      } catch (err) {
+        console.log('Seek forward not supported');
+      }
+
+      // Stop handler for iOS
+      try {
+        navigator.mediaSession.setActionHandler('stop', () => {
+          if (playerInstance && playerInstance.pauseVideo) {
+            playerInstance.pauseVideo();
+            releaseWakeLock();
+          }
+        });
+      } catch (err) {
+        console.log('Stop action not supported');
+      }
     }
   };
 

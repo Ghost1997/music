@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/ProgressBar.css';
 
 const ProgressBar = ({ currentTime, duration, onSeek }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -22,15 +23,35 @@ const ProgressBar = ({ currentTime, duration, onSeek }) => {
     setLocalProgress(value);
   };
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e) => {
+    e.preventDefault();
     setIsDragging(true);
   };
 
   const handleMouseUp = (e) => {
+    e.preventDefault();
     setIsDragging(false);
     const value = parseFloat(e.target.value);
     const seekTime = (value / 100) * duration;
-    onSeek(seekTime);
+    if (!isNaN(seekTime) && isFinite(seekTime)) {
+      onSeek(seekTime);
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const value = parseFloat(e.target.value);
+    const seekTime = (value / 100) * duration;
+    if (!isNaN(seekTime) && isFinite(seekTime)) {
+      onSeek(seekTime);
+    }
   };
 
   return (
@@ -46,8 +67,8 @@ const ProgressBar = ({ currentTime, duration, onSeek }) => {
           onChange={handleProgressChange}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
-          onTouchStart={handleMouseDown}
-          onTouchEnd={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="progress-slider"
         />
         <div className="progress-fill" style={{ width: `${localProgress}%` }}></div>

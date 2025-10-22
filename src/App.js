@@ -8,6 +8,7 @@ import InstallPrompt from './components/InstallPrompt';
 import { songAPI } from './services/api';
 import { validateApiConnection } from './utils/apiValidator';
 import './styles/App.css';
+import './styles/Player.css';
 import { QueueIcon } from './components/Icons';
 
 function App() {

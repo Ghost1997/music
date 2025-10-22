@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/Playlist.css';
 
 const Playlist = ({ songs, allSongs, currentSongId, onSelectSong, searchQuery }) => {
   const displayMessage = searchQuery && songs.length === 0;
