@@ -226,22 +226,51 @@ function App() {
   const handleSaveSong = async (song) => {
     try {
       setSavingId(song.youtubeId);
-      const response = await songAPI.saveSelectedSong(song);
+      
+      // Prepare song data for saving
+      const songData = {
+        youtubeId: song.youtubeId,
+        title: song.title,
+        artist: song.artist,
+        thumbnail: song.thumbnail,
+        url: song.url,
+        channelId: song.channelId,
+        channelName: song.channelName,
+        duration: song.duration,
+        durationSeconds: song.durationSeconds,
+        publishedAt: song.publishedAt,
+        viewCount: song.viewCount,
+        likeCount: song.likeCount,
+        commentCount: song.commentCount,
+        description: song.description,
+        tags: song.tags,
+        categoryId: song.categoryId,
+        thumbnails: song.thumbnails
+      };
+      
+      const response = await songAPI.saveSelectedSong(songData);
       
       if (response.success) {
+        // Update search results to show song is now in database
         setSearchResults(prev => 
           prev.map(s => 
             s.youtubeId === song.youtubeId 
-              ? { ...s, inDatabase: true, source: 'database' }
+              ? { ...s, inDatabase: true, source: 'database', id: response.data._id || response.data.id }
               : s
           )
         );
-        console.log('Song saved successfully');
+        
+        // Refresh the main songs list to include the newly saved song
+        await fetchAllSongs();
+        
+        alert('Song added to library successfully!');
       } else {
         console.error('Failed to save song:', response.error);
+        alert('Failed to add song to library. Please try again.');
       }
     } catch (error) {
       console.error('Error saving song:', error);
+      alert('Error adding song to library. Please check your connection.');
     } finally {
       setSavingId(null);
     }

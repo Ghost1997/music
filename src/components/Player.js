@@ -7,9 +7,23 @@ const Player = ({ videoId, onReady, onStateChange }) => {
   const isInitializedRef = useRef(false);
   const wakeLockRef = useRef(null);
   const hasInteractedRef = useRef(false);
+  const audioElementRef = useRef(null);
+  const isIOSRef = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent));
   
   // Initialize audio context for iOS
   useAudioContext();
+
+  // Create audio element for iOS background playback
+  useEffect(() => {
+    if (isIOSRef.current && !audioElementRef.current) {
+      audioElementRef.current = document.getElementById('ios-audio-session');
+      if (audioElementRef.current) {
+        audioElementRef.current.loop = false;
+        audioElementRef.current.volume = 0.01; // Very low volume, YouTube player handles actual audio
+        audioElementRef.current.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      }
+    }
+  }, []);
 
   // Request wake lock to keep screen active during playback
   const requestWakeLock = async () => {
@@ -239,6 +253,19 @@ const Player = ({ videoId, onReady, onStateChange }) => {
               }
             },
             onStateChange: (event) => {
+              // Sync audio element for iOS background playback
+              if (isIOSRef.current && audioElementRef.current) {
+                try {
+                  if (event.data === 1) { // Playing
+                    audioElementRef.current.play().catch(() => {});
+                  } else if (event.data === 2 || event.data === 0) { // Paused or Ended
+                    audioElementRef.current.pause();
+                  }
+                } catch (err) {
+                  console.error('Audio element sync error:', err);
+                }
+              }
+
               // Update media session playback state
               if ('mediaSession' in navigator) {
                 const playbackState = 

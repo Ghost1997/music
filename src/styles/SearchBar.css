@@ -1,9 +1,10 @@
 /* Search Bar Component Styles */
 
 .main-search {
-  width: min(90%, 480px);
+  width: 100%;
+  max-width: 480px;
   position: relative;
-  margin: 0 auto;
+  margin: 0 auto 8px;
   z-index: 1000;
 }
 
@@ -74,8 +75,9 @@
 
 .search-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 0;
+  right: 0;
   width: 100%;
   background: var(--glass-bg);
   backdrop-filter: blur(30px);
@@ -84,12 +86,11 @@
   overflow: hidden;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
   animation: slideDown 0.3s ease;
-  max-height: min(420px, 50vh);
+  max-height: min(400px, 45vh);
   overflow-y: auto;
   z-index: 2000;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  margin-top: 8px;
 }
 
 @keyframes slideDown {
