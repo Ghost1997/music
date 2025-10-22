@@ -2,19 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#8b5cf6">
     <meta name="description" content="A beautiful music player with YouTube integration">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Music Player">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="background-audio" content="true">
+    <meta name="audio-playback" content="true">
+    <meta name="media-playback" content="background">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-itunes-app" content="app-clip-bundle-id=com.yourapp.musicplayer">
+    <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png">
+    <meta name="apple-touch-fullscreen" content="yes">
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <link rel="shortcut icon" href="/icons/icon-72x72.png">
     <title>YouTube Music Player</title>
+    <script src="/ios-audio.js"></script>
 </head>
 <body>
     <div id="root"></div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- iOS Audio Session Handler -->
+    <audio id="ios-audio-session" style="display: none" playsinline></audio>
 </body>
 </html>

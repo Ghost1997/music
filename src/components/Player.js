@@ -1,9 +1,58 @@
 import React, { useEffect, useRef } from 'react';
+import useAudioContext from '../hooks/useAudioContext';
 
 const Player = ({ videoId, onReady, onStateChange }) => {
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const isInitializedRef = useRef(false);
+  const wakeLockRef = useRef(null);
+  const audioContextRef = useRef(null);
+  
+  // Initialize audio context for iOS
+  useAudioContext();
+
+  // Request wake lock to keep screen active during playback
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      }
+    } catch (err) {
+      console.error('Wake Lock error:', err);
+    }
+  };
+
+  // Release wake lock when not playing
+  const releaseWakeLock = () => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release();
+      wakeLockRef.current = null;
+    }
+  };
+
+  // Setup media session
+  const setupMediaSession = (playerInstance) => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        playerInstance.playVideo();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        playerInstance.pauseVideo();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        // Handle previous track
+        if (onStateChange) {
+          onStateChange({ data: -2 }); // Custom event for previous
+        }
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        // Handle next track
+        if (onStateChange) {
+          onStateChange({ data: 0 }); // Simulate end of track
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     // Validate videoId
@@ -17,10 +66,12 @@ const Player = ({ videoId, onReady, onStateChange }) => {
       // Just load the new video without destroying the player
       try {
         playerRef.current.loadVideoById(videoId);
+        requestWakeLock(); // Request wake lock when loading new video
       } catch (error) {
         console.error('Error loading video:', error);
         // Attempt to recover by destroying and recreating player
         try {
+          releaseWakeLock(); // Release wake lock before destroying player
           if (playerRef.current && playerRef.current.destroy) {
             playerRef.current.destroy();
             playerRef.current = null;
@@ -54,11 +105,18 @@ const Player = ({ videoId, onReady, onStateChange }) => {
             rel: 0,
             showinfo: 0,
             iv_load_policy: 3,
-            enablejsapi: 1
+            enablejsapi: 1,
+            loop: 1,
+            playlist: videoId,
+            background: 1,
+            origin: window.location.origin
           },
           events: {
             onReady: (event) => {
               isInitializedRef.current = true;
+              setupMediaSession(event.target);
+              requestWakeLock();
+              
               if (onReady) {
                 try {
                   onReady(event.target);
@@ -68,6 +126,21 @@ const Player = ({ videoId, onReady, onStateChange }) => {
               }
             },
             onStateChange: (event) => {
+              // Update media session playback state
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 
+                  event.data === 1 ? 'playing' : 
+                  event.data === 2 ? 'paused' : 
+                  event.data === 0 ? 'none' : 'none';
+
+                // Handle wake lock based on playback state
+                if (event.data === 1) {
+                  requestWakeLock();
+                } else if (event.data === 2 || event.data === 0) {
+                  releaseWakeLock();
+                }
+              }
+
               if (onStateChange) {
                 try {
                   onStateChange(event);
@@ -102,6 +175,17 @@ const Player = ({ videoId, onReady, onStateChange }) => {
 
     // Cleanup function
     return () => {
+      // Release wake lock
+      releaseWakeLock();
+
+      // Clear media session handlers
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+      }
+
       if (playerRef.current && playerRef.current.destroy) {
         try {
           // Only destroy if we're truly unmounting

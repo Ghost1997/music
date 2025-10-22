@@ -4,6 +4,17 @@
   "description": "A beautiful music player with YouTube integration",
   "start_url": "/",
   "display": "standalone",
+  "background_music": true,
+  "permissions": ["background", "mediaSession"],
+  "scope": "/",
+  "platform": "ios",
+  "ios": {
+    "capabilities": [
+      "audio",
+      "background-audio",
+      "background-mode"
+    ]
+  },
   "background_color": "#020617",
   "theme_color": "#8b5cf6",
   "orientation": "portrait-primary",
