@@ -255,7 +255,7 @@ function App() {
         setSearchResults(prev => 
           prev.map(s => 
             s.youtubeId === song.youtubeId 
-              ? { ...s, inDatabase: true, source: 'database', id: response.data._id || response.data.id }
+              ? { ...s, inDatabase: true, source: 'database', id: response.data?._id || response.data?.id }
               : s
           )
         );
@@ -275,6 +275,19 @@ function App() {
       setSavingId(null);
     }
   };
+
+  const handleViewAllResults = useCallback(() => {
+    // Add all search results to the queue
+    const existingYoutubeIds = new Set(songs.map(s => s.youtubeId));
+    const newSongs = searchResults.filter(s => !existingYoutubeIds.has(s.youtubeId));
+    
+    if (newSongs.length > 0) {
+      setSongs([...songs, ...newSongs]);
+    }
+    
+    setShowPlaylist(true);
+    setShowSuggestions(false);
+  }, [songs, searchResults]);
 
   const handleSelectSong = useCallback((songToPlay) => {
     const songIndex = songs.findIndex(s => s.youtubeId === songToPlay.youtubeId);
@@ -488,8 +501,8 @@ function App() {
                         </div>
                       ))}
                       {searchResults.length > 5 && (
-                        <div className="show-all" onClick={() => { setShowPlaylist(true); setShowSuggestions(false); }}>
-                          View all {searchResults.length} results
+                        <div className="show-all" onClick={handleViewAllResults}>
+                          Add all {searchResults.length} results to queue
                         </div>
                       )}
                     </>

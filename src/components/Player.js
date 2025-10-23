@@ -280,15 +280,16 @@ const Player = ({ videoId, onReady, onStateChange }) => {
                     const duration = event.target.getDuration();
                     const position = event.target.getCurrentTime();
                     
-                    if (duration > 0) {
+                    if (duration > 0 && position >= 0 && position <= duration) {
                       navigator.mediaSession.setPositionState({
-                        duration: duration,
+                        duration: Math.max(duration, 1),
                         playbackRate: 1,
-                        position: position
+                        position: Math.max(0, Math.min(position, duration))
                       });
                     }
                   } catch (err) {
-                    console.error('Error updating position state:', err);
+                    // Silently fail - position state not critical
+                    console.log('Position state not supported');
                   }
                 }
 

@@ -9,6 +9,9 @@
   justify-content: center;
   perspective: 1000px;
   margin: 0 auto;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .album-art-glow {
@@ -66,6 +69,9 @@
 .song-details {
   text-align: center;
   padding: 0 20px;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .song-details h1 {
@@ -92,6 +98,9 @@
   justify-content: center;
   align-items: center;
   margin-top: clamp(8px, 2vh, 16px);
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .queue-btn {
@@ -110,6 +119,12 @@
   -webkit-tap-highlight-color: rgba(139, 92, 246, 0.2);
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  z-index: 10;
+  min-width: 120px;
+  min-height: 48px;
 }
 
 .queue-btn:hover {
@@ -119,9 +134,19 @@
   box-shadow: 0 4px 20px var(--shadow);
 }
 
+.queue-btn:active {
+  transform: translateY(0) scale(0.98);
+  background: var(--card-hover);
+}
+
 .queue-btn svg {
   width: 20px;
   height: 20px;
+  pointer-events: none;
+}
+
+.queue-btn span {
+  pointer-events: none;
 }
 
 .no-songs-message {
@@ -148,6 +173,18 @@
 
   .song-details p {
     font-size: 16px;
+  }
+
+  .queue-btn {
+    padding: 14px 28px;
+    font-size: 16px;
+    min-width: 140px;
+    min-height: 52px;
+  }
+
+  .queue-btn svg {
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -248,6 +285,39 @@
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+  }
+
+  .album-art-container,
+  .song-details {
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+  }
+
+  .queue-btn {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .queue-btn:active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: scale(0.95);
+  }
+
+  /* Prevent accidental touches on non-interactive elements */
+  .album-art-container,
+  .album-art,
+  .album-art-glow,
+  .song-details,
+  .song-details h1,
+  .song-details p {
+    pointer-events: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
   }
 }
 

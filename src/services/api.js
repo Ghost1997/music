@@ -1,7 +1,5 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/music';
 
-console.log('API Base URL:', API_BASE_URL);
-
 const getBestThumbnail = (video) => {
   if (video.thumbnails) {
     return video.thumbnails.maxres || 
@@ -49,7 +47,6 @@ export const songAPI = {
   
   getAllSongs: async (limit = 100) => {
     try {
-      console.log('Fetching songs from:', `${API_BASE_URL}/videos?limit=${limit}`);
       const response = await fetch(`${API_BASE_URL}/videos?limit=${limit}`, {
         method: 'GET',
         headers: {
@@ -58,9 +55,7 @@ export const songAPI = {
         }
       });
       
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
       
       if (!response.ok) {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
@@ -96,14 +91,22 @@ export const songAPI = {
   // NEW: Hybrid search (database + YouTube)
   hybridSearch: async (query) => {
     try {
-      console.log('Hybrid search for:', query);
-      const response = await fetch(`${API_BASE_URL}/search/hybrid?q=${encodeURIComponent(query)}&limit=20`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+      if (!query || query.trim() === '') {
+        return { success: false, error: 'Search query is required', data: [], count: 0 };
+      }
+
+      const trimmedQuery = query.trim();
+      
+      const response = await fetch(
+        `${API_BASE_URL}/search/hybrid?q=${encodeURIComponent(trimmedQuery)}&limit=20`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
       
       const data = await response.json();
       
@@ -118,14 +121,23 @@ export const songAPI = {
       return data;
     } catch (error) {
       console.error('Error in hybrid search:', error);
-      return { success: false, error: error.message, data: [] };
+      return { 
+        success: false, 
+        error: error.message, 
+        data: [],
+        count: 0,
+        stats: { fromDatabase: 0, fromYoutube: 0 }
+      };
     }
   },
 
   // NEW: Save selected song to database
   saveSelectedSong: async (song) => {
     try {
-      console.log('Saving song:', song.youtubeId);
+      if (!song || !song.youtubeId) {
+        throw new Error('Invalid song data: youtubeId is required');
+      }
+      
       const response = await fetch(`${API_BASE_URL}/search/save-selected`, {
         method: 'POST',
         headers: {
@@ -144,7 +156,10 @@ export const songAPI = {
       return data;
     } catch (error) {
       console.error('Error saving song:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || 'Failed to save song'
+      };
     }
   },
 
