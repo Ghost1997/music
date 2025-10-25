@@ -75,16 +75,22 @@
 
 .playlist-actions {
   display: flex;
-  gap: 16px;
-  padding: 24px 32px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
   background: linear-gradient(rgba(0, 0, 0, 0.6), #121212);
+  flex-wrap: nowrap;
+}
+
+.playlist-actions button {
+  white-space: nowrap;
 }
 
 .play-all-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 32px;
+  padding: 10px 24px;
   background: #1db954;
   color: #000;
   border: none;
@@ -104,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 32px;
+  padding: 10px 24px;
   background: transparent;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);

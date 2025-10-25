@@ -145,15 +145,16 @@ function AddToPlaylistModal({ song, onClose, onPlaylistsChange }) {
                       onClick={() => !isSongInPlaylist(playlist) && handleAddToPlaylist(playlist._id)}
                     >
                       <div className="playlist-item-cover">
-                        {playlist.songs && playlist.songs.length > 0 ? (
-                          <img src={playlist.songs[0].thumbnail} alt={playlist.name} />
-                        ) : (
-                          <div className="playlist-placeholder">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        {(() => {
+                          const coverSong = playlist.songs?.find(s => s?.thumbnail);
+                          return coverSong ? (
+                            <img src={coverSong.thumbnail} alt={coverSong.title || playlist.name} />
+                          ) : (
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"></path>
                             </svg>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                       <div className="playlist-item-info">
                         <div className="playlist-item-name">{playlist.name}</div>

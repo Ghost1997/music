@@ -83,24 +83,26 @@ function Playlists() {
             </button>
           </div>
         ) : (
-          playlists.map((playlist) => (
-            <div 
-              key={playlist._id}
-              className="playlist-card"
-              onClick={() => handlePlaylistClick(playlist._id)}
-            >
-              <div className="playlist-cover">
-                {playlist.songs && playlist.songs.length > 0 ? (
-                  <img 
-                    src={playlist.songs[0].thumbnail} 
-                    alt={playlist.name}
-                  />
-                ) : (
-                  <div className="playlist-placeholder">
-                    <Music size={48} />
-                  </div>
-                )}
-              </div>
+          playlists.map((playlist) => {
+            const coverSong = playlist.songs?.find(song => song && song.thumbnail);
+            return (
+              <div 
+                key={playlist._id}
+                className="playlist-card"
+                onClick={() => handlePlaylistClick(playlist._id)}
+              >
+                <div className="playlist-cover">
+                  {coverSong ? (
+                    <img 
+                      src={coverSong.thumbnail} 
+                      alt={coverSong.title || playlist.name}
+                    />
+                  ) : (
+                    <div className="playlist-placeholder">
+                      <Music size={48} />
+                    </div>
+                  )}
+                </div>
               <div className="playlist-info">
                 <h3>{playlist.name}</h3>
                 <p>{playlist.description || 'No description'}</p>
@@ -108,8 +110,9 @@ function Playlists() {
                   {playlist.songs?.length || 0} songs
                 </span>
               </div>
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
 
