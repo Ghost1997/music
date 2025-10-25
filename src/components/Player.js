@@ -195,7 +195,12 @@ const Player = ({ videoId, onReady, onStateChange }) => {
     // Reuse existing player if possible
     if (playerRef.current && isInitializedRef.current) {
       try {
-        playerRef.current.loadVideoById({ videoId, startSeconds: 0 });
+        const currentVideoId = playerRef.current.getVideoData?.()?.video_id;
+
+        if (currentVideoId !== videoId) {
+          playerRef.current.loadVideoById({ videoId, startSeconds: 0 });
+        }
+
         requestWakeLock();
         return;
       } catch (error) {

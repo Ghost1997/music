@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import Player from './Player';
 import Controls from './Controls';
@@ -34,6 +34,11 @@ const GlobalPlayer = () => {
   const [isLiking, setIsLiking] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
+  const isPlayingRef = useRef(isPlaying);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   useEffect(() => {
     if (!currentSong && isExpanded) {
@@ -58,9 +63,10 @@ const GlobalPlayer = () => {
 
   const handlePlayerReady = useCallback((playerInstance) => {
     setPlayer(playerInstance);
-    // Auto-play when player is ready and isPlaying is true
-    if (isPlaying) {
+    // Auto-play when player is ready and playback was already in progress
+    if (isPlayingRef.current) {
       setTimeout(() => {
+        if (!isPlayingRef.current) return;
         try {
           playerInstance.playVideo();
         } catch (error) {
@@ -68,7 +74,7 @@ const GlobalPlayer = () => {
         }
       }, 100);
     }
-  }, [setPlayer, isPlaying]);
+  }, [setPlayer]);
 
   const handleToggleLike = useCallback(async () => {
     if (!currentSong || isLiking) return;
