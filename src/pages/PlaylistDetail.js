@@ -94,11 +94,16 @@ function PlaylistDetail() {
     playSongWithContext(playlist.songs[0], `playlist-${id}`, playlist.songs);
   };
 
-  const handleRemoveSong = async (songId) => {
+  const handleRemoveSong = async (songYoutubeId) => {
     if (!window.confirm('Remove this song from the playlist?')) return;
 
+    if (!songYoutubeId) {
+      showToast('Unable to remove song: missing identifier', 'error');
+      return;
+    }
+
     try {
-      const response = await playlistAPI.removeSongFromPlaylist(id, songId);
+      const response = await playlistAPI.removeSongFromPlaylist(id, songYoutubeId);
       
       if (response.success) {
         await loadPlaylist();
@@ -238,7 +243,7 @@ function PlaylistDetail() {
                 <div className="col-actions">
                   <button 
                     className="remove-btn"
-                    onClick={() => handleRemoveSong(song._id || song.youtubeId)}
+                    onClick={() => handleRemoveSong(song.youtubeId)}
                     title="Remove from playlist"
                   >
                     <Trash2 size={16} />
