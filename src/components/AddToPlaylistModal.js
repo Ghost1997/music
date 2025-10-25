@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check } from 'lucide-react';
 import { playlistAPI } from '../services/playlistAPI';
+import { songAPI } from '../services/api';
 import { useToast } from '../hooks/useToast';
 import Toast from './Toast';
 import '../styles/AddToPlaylistModal.css';
@@ -9,6 +10,7 @@ function AddToPlaylistModal({ song, onClose, onPlaylistsChange }) {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addingTo, setAddingTo] = useState(null);
+  const [savingSong, setSavingSong] = useState(false);
   const [showCreateNew, setShowCreateNew] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -33,8 +35,60 @@ function AddToPlaylistModal({ song, onClose, onPlaylistsChange }) {
   };
 
   const handleAddToPlaylist = async (playlistId) => {
+    if (!song?.youtubeId) {
+      showToast('Unable to add song: missing YouTube ID', 'error');
+      return;
+    }
+
     try {
       setAddingTo(playlistId);
+
+      if (!song.inDatabase) {
+        try {
+          setSavingSong(true);
+          const payload = {
+            youtubeId: song.youtubeId,
+            title: song.title,
+            artist: song.artist,
+            thumbnail: song.thumbnail,
+            thumbnails: song.thumbnails,
+            duration: song.duration,
+            durationSeconds: song.durationSeconds,
+            channelId: song.channelId,
+            channelName: song.channelName,
+            source: song.source || 'search'
+          };
+
+          const saveResult = await songAPI.saveSelectedSong(payload);
+
+          if (!saveResult.success) {
+            throw new Error(saveResult.error || 'Failed to persist song metadata');
+          }
+
+          // Mark song as persisted so future adds skip save
+          song.inDatabase = true;
+
+          const savedData = Array.isArray(saveResult.data)
+            ? saveResult.data[0]
+            : saveResult.data;
+
+          if (savedData) {
+            song.title = song.title || savedData.title;
+            song.artist = song.artist || savedData.artist;
+            song.thumbnail = song.thumbnail || savedData.thumbnail;
+            song.duration = song.duration || savedData.duration;
+            song.durationSeconds = song.durationSeconds || savedData.durationSeconds;
+            song.channelName = song.channelName || savedData.channelName;
+          }
+        } catch (saveError) {
+          console.error('Error saving song before playlist add:', saveError);
+          showToast('Failed to save song details. Please try again.', 'error');
+          return;
+        } finally {
+          setSavingSong(false);
+        }
+      }
+
       const response = await playlistAPI.addSongToPlaylist(playlistId, song.youtubeId);
 
       if (response.success) {
@@ -142,7 +196,7 @@ function AddToPlaylistModal({ song, onClose, onPlaylistsChange }) {
                     <div
                       key={playlist._id}
                       className={`playlist-item ${isSongInPlaylist(playlist) ? 'added' : ''}`}
-                      onClick={() => !isSongInPlaylist(playlist) && handleAddToPlaylist(playlist._id)}
+                      onClick={() => !isSongInPlaylist(playlist) && !savingSong && handleAddToPlaylist(playlist._id)}
                     >
                       <div className="playlist-item-cover">
                         {(() => {
@@ -162,7 +216,7 @@ function AddToPlaylistModal({ song, onClose, onPlaylistsChange }) {
                       </div>
                       {isSongInPlaylist(playlist) ? (
                         <Check size={20} className="check-icon" />
-                      ) : addingTo === playlist._id ? (
+                      ) : addingTo === playlist._id || savingSong ? (
                         <div className="adding-spinner"></div>
                       ) : null}
                     </div>
