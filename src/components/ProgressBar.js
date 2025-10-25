@@ -19,7 +19,9 @@ const ProgressBar = ({ currentTime, duration, onSeek }) => {
   };
 
   const handleProgressChange = (e) => {
-    const value = parseFloat(e.target.value);
+    const raw = (e && e.currentTarget && e.currentTarget.value) ?? (e && e.target && e.target.value);
+    const value = Math.max(0, Math.min(100, parseFloat(raw ?? 0)));
+    if (!Number.isFinite(value)) return;
     setLocalProgress(value);
   };
 
@@ -31,9 +33,10 @@ const ProgressBar = ({ currentTime, duration, onSeek }) => {
   const handleMouseUp = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const value = parseFloat(e.target.value);
+    const raw = (e && e.currentTarget && e.currentTarget.value) ?? (e && e.target && e.target.value);
+    const value = Math.max(0, Math.min(100, parseFloat(raw ?? localProgress)));
     const seekTime = (value / 100) * duration;
-    if (!isNaN(seekTime) && isFinite(seekTime)) {
+    if (Number.isFinite(seekTime)) {
       onSeek(seekTime);
     }
   };
@@ -47,17 +50,31 @@ const ProgressBar = ({ currentTime, duration, onSeek }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    const value = parseFloat(e.target.value);
+    const raw = (e && e.currentTarget && e.currentTarget.value) ?? (e && e.target && e.target.value);
+    const value = Math.max(0, Math.min(100, parseFloat(raw ?? localProgress)));
     const seekTime = (value / 100) * duration;
-    if (!isNaN(seekTime) && isFinite(seekTime)) {
+    if (Number.isFinite(seekTime)) {
       onSeek(seekTime);
     }
+  };
+
+  // Click anywhere on the track to seek (in case input events fail)
+  const handleBarClick = (e) => {
+    try {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      const percent = (x / rect.width) * 100;
+      const clamped = Math.max(0, Math.min(100, percent));
+      setLocalProgress(clamped);
+      const seekTime = (clamped / 100) * duration;
+      if (Number.isFinite(seekTime)) onSeek(seekTime);
+    } catch (_) {}
   };
 
   return (
     <div className="progress-container">
       <span className="time">{formatTime(currentTime)}</span>
-      <div className="progress-bar">
+      <div className="progress-bar" onClick={handleBarClick}>
         <input
           type="range"
           min="0"

@@ -1,7 +1,12 @@
 import React, { useRef } from 'react';
 import '../styles/Controls.css';
 
-const Controls = ({ isPlaying, onPlayPause, onPrevious, onNext }) => {
+const Controls = ({
+  isPlaying,
+  onPlayPause,
+  onPrevious,
+  onNext
+}) => {
   const touchStartRef = useRef(null);
   
   // Improved touch handling to prevent double-tap and ensure single action

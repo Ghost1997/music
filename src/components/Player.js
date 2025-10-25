@@ -9,7 +9,7 @@ const Player = ({ videoId, onReady, onStateChange }) => {
   const hasInteractedRef = useRef(false);
   const audioElementRef = useRef(null);
   const isIOSRef = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent));
-  
+
   // Initialize audio context for iOS
   useAudioContext();
 
@@ -46,109 +46,97 @@ const Player = ({ videoId, onReady, onStateChange }) => {
 
   // Setup media session for background playback
   const setupMediaSession = (playerInstance) => {
-    if ('mediaSession' in navigator) {
-      // Set metadata for lock screen controls
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'Loading...',
-        artist: 'Music Player',
-        artwork: [
-          { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
-          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
-        ]
-      });
+    if (!('mediaSession' in navigator)) {
+      return;
+    }
 
-      // Play handler
-      navigator.mediaSession.setActionHandler('play', () => {
-        try {
-          if (playerInstance && playerInstance.playVideo) {
-            playerInstance.playVideo();
-            requestWakeLock();
-          }
-        } catch (err) {
-          console.error('Error in play handler:', err);
-        }
-      });
-      
-      // Pause handler
-      navigator.mediaSession.setActionHandler('pause', () => {
-        try {
-          if (playerInstance && playerInstance.pauseVideo) {
-            playerInstance.pauseVideo();
-            releaseWakeLock();
-          }
-        } catch (err) {
-          console.error('Error in pause handler:', err);
-        }
-      });
-      
-      // Previous track handler
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        try {
-          if (onStateChange) {
-            onStateChange({ data: -2 });
-          }
-        } catch (err) {
-          console.error('Error in previous handler:', err);
-        }
-      });
-      
-      // Next track handler
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        try {
-          if (onStateChange) {
-            onStateChange({ data: 0 });
-          }
-        } catch (err) {
-          console.error('Error in next handler:', err);
-        }
-      });
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'Loading...',
+      artist: 'Music Player',
+      artwork: [
+        { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
+        { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' }
+      ]
+    });
 
-      // Seek backward handler
+    const safeHandler = (action, handler) => {
       try {
-        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
-          if (playerInstance && playerInstance.getCurrentTime && playerInstance.seekTo) {
-            const skipTime = details.seekOffset || 10;
-            const currentTime = playerInstance.getCurrentTime();
-            playerInstance.seekTo(Math.max(0, currentTime - skipTime), true);
-          }
-        });
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (err) {
+        // Some platforms do not support all handlers
+      }
+    };
+
+    safeHandler('play', () => {
+      try {
+        playerInstance?.playVideo?.();
+        requestWakeLock();
+      } catch (err) {
+        console.error('Error in play handler:', err);
+      }
+    });
+
+    safeHandler('pause', () => {
+      try {
+        playerInstance?.pauseVideo?.();
+        releaseWakeLock();
+      } catch (err) {
+        console.error('Error in pause handler:', err);
+      }
+    });
+
+    safeHandler('previoustrack', () => {
+      try {
+        onStateChange?.({ data: -2 });
+      } catch (err) {
+        console.error('Error in previous handler:', err);
+      }
+    });
+
+    safeHandler('nexttrack', () => {
+      try {
+        onStateChange?.({ data: 0 });
+      } catch (err) {
+        console.error('Error in next handler:', err);
+      }
+    });
+
+    safeHandler('seekbackward', (details) => {
+      try {
+        const skipTime = details.seekOffset || 10;
+        const currentTime = playerInstance?.getCurrentTime?.() || 0;
+        playerInstance?.seekTo?.(Math.max(0, currentTime - skipTime), true);
       } catch (err) {
         console.log('Seek backward not supported');
       }
+    });
 
-      // Seek forward handler
+    safeHandler('seekforward', (details) => {
       try {
-        navigator.mediaSession.setActionHandler('seekforward', (details) => {
-          if (playerInstance && playerInstance.getCurrentTime && playerInstance.getDuration && playerInstance.seekTo) {
-            const skipTime = details.seekOffset || 10;
-            const currentTime = playerInstance.getCurrentTime();
-            const duration = playerInstance.getDuration();
-            playerInstance.seekTo(Math.min(duration, currentTime + skipTime), true);
-          }
-        });
+        const skipTime = details.seekOffset || 10;
+        const currentTime = playerInstance?.getCurrentTime?.() || 0;
+        const duration = playerInstance?.getDuration?.() || 0;
+        playerInstance?.seekTo?.(Math.min(duration, currentTime + skipTime), true);
       } catch (err) {
         console.log('Seek forward not supported');
       }
+    });
 
-      // Stop handler for iOS
+    safeHandler('stop', () => {
       try {
-        navigator.mediaSession.setActionHandler('stop', () => {
-          if (playerInstance && playerInstance.pauseVideo) {
-            playerInstance.pauseVideo();
-            releaseWakeLock();
-          }
-        });
+        playerInstance?.pauseVideo?.();
+        releaseWakeLock();
       } catch (err) {
         console.log('Stop action not supported');
       }
-    }
+    });
   };
 
   // iOS-specific audio unlock
-  const unlockAudioForIOS = () => {
+  useEffect(() => {
     if (hasInteractedRef.current) return;
-    
+
     const unlockAudio = () => {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const buffer = audioContext.createBuffer(1, 1, 22050);
@@ -156,65 +144,77 @@ const Player = ({ videoId, onReady, onStateChange }) => {
       source.buffer = buffer;
       source.connect(audioContext.destination);
       source.start(0);
-      
+
       audioContext.resume().then(() => {
         hasInteractedRef.current = true;
-        console.log('iOS audio unlocked');
       });
-      
-      // Remove listeners after first interaction
+
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('touchend', unlockAudio);
       document.removeEventListener('click', unlockAudio);
     };
-    
+
     document.addEventListener('touchstart', unlockAudio, { once: true });
     document.addEventListener('touchend', unlockAudio, { once: true });
     document.addEventListener('click', unlockAudio, { once: true });
-  };
 
+    return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('touchend', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+    };
+  }, []);
+
+  // Host container lives outside React tree to avoid reconciliation issues
   useEffect(() => {
-    // Unlock audio on iOS
-    unlockAudioForIOS();
+    const container = document.createElement('div');
+    container.style.cssText = 'display:none;position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;';
+    container.dataset.ytPlayerHost = 'true';
+    document.body.appendChild(container);
+    containerRef.current = container;
+
+    return () => {
+      if (containerRef.current?.parentNode) {
+        containerRef.current.parentNode.removeChild(containerRef.current);
+      }
+      containerRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
     if (!videoId) {
-      console.warn('No video ID provided to Player component');
       return;
     }
 
+    const container = containerRef.current;
+    if (!container) {
+      console.error('YouTube player container missing');
+      return;
+    }
+
+    // Reuse existing player if possible
     if (playerRef.current && isInitializedRef.current) {
       try {
-        playerRef.current.loadVideoById(videoId);
+        playerRef.current.loadVideoById({ videoId, startSeconds: 0 });
         requestWakeLock();
+        return;
       } catch (error) {
-        console.error('Error loading video:', error);
-        try {
-          releaseWakeLock();
-          if (playerRef.current && playerRef.current.destroy) {
-            playerRef.current.destroy();
-            playerRef.current = null;
-            isInitializedRef.current = false;
-          }
-        } catch (destroyError) {
-          console.error('Error destroying player:', destroyError);
-        }
+        console.error('Error loading video, recreating player:', error);
       }
-      return;
     }
 
+    let cancelled = false;
+
     const initPlayer = () => {
-      if (!window.YT || !window.YT.Player) {
-        console.error('YouTube API not loaded');
-        return;
-      }
+      if (cancelled) return;
 
       try {
-        playerRef.current = new window.YT.Player(containerRef.current, {
+        container.innerHTML = '';
+
+        playerRef.current = new window.YT.Player(container, {
           height: '0',
           width: '0',
-          videoId: videoId,
+          videoId,
           playerVars: {
             controls: 0,
             disablekb: 1,
@@ -225,7 +225,7 @@ const Player = ({ videoId, onReady, onStateChange }) => {
             showinfo: 0,
             iv_load_policy: 3,
             enablejsapi: 1,
-            autoplay: 0,  // Changed to 0 for iOS compatibility
+            autoplay: 0,
             origin: window.location.origin,
             widget_referrer: window.location.origin
           },
@@ -233,32 +233,28 @@ const Player = ({ videoId, onReady, onStateChange }) => {
             onReady: (event) => {
               isInitializedRef.current = true;
               setupMediaSession(event.target);
-              
-              // Set volume to ensure audio is enabled
+
               try {
                 event.target.setVolume(100);
                 event.target.unMute();
               } catch (err) {
                 console.error('Error setting volume:', err);
               }
-              
+
               requestWakeLock();
-              
-              if (onReady) {
-                try {
-                  onReady(event.target);
-                } catch (error) {
-                  console.error('Error in onReady callback:', error);
-                }
+
+              try {
+                onReady?.(event.target);
+              } catch (err) {
+                console.error('Error in onReady callback:', err);
               }
             },
             onStateChange: (event) => {
-              // Sync audio element for iOS background playback
               if (isIOSRef.current && audioElementRef.current) {
                 try {
-                  if (event.data === 1) { // Playing
+                  if (event.data === 1) {
                     audioElementRef.current.play().catch(() => {});
-                  } else if (event.data === 2 || event.data === 0) { // Paused or Ended
+                  } else if (event.data === 2 || event.data === 0) {
                     audioElementRef.current.pause();
                   }
                 } catch (err) {
@@ -266,20 +262,18 @@ const Player = ({ videoId, onReady, onStateChange }) => {
                 }
               }
 
-              // Update media session playback state
               if ('mediaSession' in navigator) {
-                const playbackState = 
-                  event.data === 1 ? 'playing' : 
+                const playbackState =
+                  event.data === 1 ? 'playing' :
                   event.data === 2 ? 'paused' : 'none';
-                
+
                 navigator.mediaSession.playbackState = playbackState;
 
-                // Update position state for iOS lock screen
                 if (event.data === 1 && event.target) {
                   try {
                     const duration = event.target.getDuration();
                     const position = event.target.getCurrentTime();
-                    
+
                     if (duration > 0 && position >= 0 && position <= duration) {
                       navigator.mediaSession.setPositionState({
                         duration: Math.max(duration, 1),
@@ -288,12 +282,10 @@ const Player = ({ videoId, onReady, onStateChange }) => {
                       });
                     }
                   } catch (err) {
-                    // Silently fail - position state not critical
                     console.log('Position state not supported');
                   }
                 }
 
-                // Handle wake lock based on playback state
                 if (event.data === 1) {
                   requestWakeLock();
                 } else if (event.data === 2 || event.data === 0) {
@@ -301,12 +293,10 @@ const Player = ({ videoId, onReady, onStateChange }) => {
                 }
               }
 
-              if (onStateChange) {
-                try {
-                  onStateChange(event);
-                } catch (error) {
-                  console.error('Error in onStateChange callback:', error);
-                }
+              try {
+                onStateChange?.(event);
+              } catch (err) {
+                console.error('Error in onStateChange callback:', err);
               }
             },
             onError: (event) => {
@@ -320,19 +310,25 @@ const Player = ({ videoId, onReady, onStateChange }) => {
       }
     };
 
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      window.onYouTubeIframeAPIReady = initPlayer;
-    } else if (window.YT && window.YT.Player) {
+    if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
+      const previousCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        previousCallback?.();
+        initPlayer();
+      };
+
+      if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
     }
 
     return () => {
+      cancelled = true;
       releaseWakeLock();
 
       if ('mediaSession' in navigator) {
@@ -343,27 +339,26 @@ const Player = ({ videoId, onReady, onStateChange }) => {
           navigator.mediaSession.setActionHandler('nexttrack', null);
           navigator.mediaSession.setActionHandler('seekbackward', null);
           navigator.mediaSession.setActionHandler('seekforward', null);
+          navigator.mediaSession.setActionHandler('stop', null);
         } catch (err) {
           console.error('Error clearing media session:', err);
         }
       }
 
-      if (playerRef.current && playerRef.current.destroy) {
+      if (playerRef.current) {
         try {
-          const isUnmounting = !containerRef.current;
-          if (isUnmounting) {
-            playerRef.current.destroy();
-            playerRef.current = null;
-            isInitializedRef.current = false;
-          }
-        } catch (error) {
-          console.error('Error during player cleanup:', error);
+          playerRef.current.destroy();
+        } catch (err) {
+          console.error('Error destroying YouTube player:', err);
         }
       }
+
+      playerRef.current = null;
+      isInitializedRef.current = false;
     };
   }, [videoId, onReady, onStateChange]);
 
-  return <div ref={containerRef} style={{ display: 'none' }}></div>;
+  return null;
 };
 
 export default Player;

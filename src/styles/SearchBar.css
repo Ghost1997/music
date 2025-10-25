@@ -237,6 +237,36 @@
   cursor: not-allowed;
 }
 
+.suggestion-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.queue-song-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.queue-song-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
 .show-all {
   padding: 14px 18px;
   text-align: center;

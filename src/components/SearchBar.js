@@ -12,7 +12,7 @@ const SearchBar = ({ searchQuery, onSearchChange, onFocus, onBlur }) => {
         type="text"
         placeholder="Search songs or artists..."
         value={searchQuery}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={onSearchChange}
         onFocus={onFocus}
         onBlur={onBlur}
         className="search-input"
@@ -21,7 +21,7 @@ const SearchBar = ({ searchQuery, onSearchChange, onFocus, onBlur }) => {
       {searchQuery && (
         <button 
           className="clear-search" 
-          onClick={() => onSearchChange('')}
+          onClick={() => onSearchChange({ target: { value: '' } })}
           type="button"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

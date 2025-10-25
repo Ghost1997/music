@@ -1,7 +1,15 @@
 import React from 'react';
 import '../styles/Playlist.css';
 
-const Playlist = ({ songs, allSongs, currentSongId, onSelectSong, searchQuery }) => {
+const Playlist = ({
+  songs,
+  currentSongId,
+  onSelectSong,
+  onAddToQueue,
+  onRemoveFromQueue,
+  onAddToPlaylist,
+  searchQuery
+}) => {
   const displayMessage = searchQuery && songs.length === 0;
 
   return (
@@ -43,6 +51,46 @@ const Playlist = ({ songs, allSongs, currentSongId, onSelectSong, searchQuery })
                 <div className="song-title">{song.title}</div>
                 <div className="song-artist">{song.artist}</div>
               </div>
+              {(onAddToQueue || onRemoveFromQueue) && (
+                <div className="song-actions">
+                  {onAddToQueue && (
+                    <button
+                      className="queue-inline-btn add"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToQueue(song);
+                      }}
+                      title="Add to queue"
+                    >
+                      + Queue
+                    </button>
+                  )}
+                  {onRemoveFromQueue && (
+                    <button
+                      className="queue-inline-btn remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveFromQueue(song.youtubeId);
+                      }}
+                      title="Remove from queue"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {onAddToPlaylist && (
+                    <button
+                      className="queue-inline-btn playlist"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddToPlaylist(song);
+                      }}
+                      title="Add to playlist"
+                    >
+                      Playlist
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
