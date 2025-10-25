@@ -165,7 +165,7 @@
 
 .songs-list-header {
   display: grid;
-  grid-template-columns: 50px minmax(200px, 2fr) minmax(120px, 1fr) minmax(120px, 120px);
+  grid-template-columns: 50px 1fr 80px;
   gap: 16px;
   padding: 12px 20px;
   border-bottom: 1px solid #282828;
@@ -179,7 +179,7 @@
 
 .song-row {
   display: grid;
-  grid-template-columns: 50px minmax(200px, 2fr) minmax(120px, 1fr) minmax(120px, 120px);
+  grid-template-columns: 50px 1fr 80px;
   gap: 16px;
   padding: 10px 20px;
   border-radius: 4px;
@@ -232,11 +232,7 @@
 }
 
 .col-artist {
-  color: #b3b3b3;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none;
 }
 
 .col-actions {
@@ -247,6 +243,7 @@
   flex-shrink: 0;
   min-width: 0;
   white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .remove-btn {
@@ -334,10 +331,6 @@
 
   .song-row {
     grid-template-columns: 40px 1fr 80px;
-  }
-
-  .col-artist {
-    display: none;
   }
 
   .playlist-songs {

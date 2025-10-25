@@ -117,7 +117,7 @@
 
 .songs-list-header {
   display: grid;
-  grid-template-columns: 50px minmax(200px, 2fr) minmax(120px, 1fr) minmax(180px, 180px);
+  grid-template-columns: 50px 1fr 140px;
   gap: 16px;
   padding: 12px 20px;
   border-bottom: 1px solid #282828;
@@ -131,7 +131,7 @@
 
 .song-row {
   display: grid;
-  grid-template-columns: 50px minmax(200px, 2fr) minmax(120px, 1fr) minmax(180px, 180px);
+  grid-template-columns: 50px 1fr 140px;
   gap: 16px;
   align-items: center;
   padding: 10px 20px;
@@ -180,11 +180,7 @@
 
 
 .col-artist {
-  color: #b3b3b3;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none;
 }
 
 .col-actions {
@@ -195,6 +191,7 @@
   flex-shrink: 0;
   min-width: 0;
   white-space: nowrap;
+  flex-wrap: nowrap;
 }
 
 .song-row:hover {
@@ -278,15 +275,11 @@
   }
 
   .songs-list-header {
-    grid-template-columns: 40px 1fr 80px;
+    grid-template-columns: 40px 1fr 120px;
   }
 
   .song-row {
-    grid-template-columns: 40px 1fr 80px;
-  }
-
-  .col-artist {
-    display: none;
+    grid-template-columns: 40px 1fr 120px;
   }
 
   .liked-songs-content {
