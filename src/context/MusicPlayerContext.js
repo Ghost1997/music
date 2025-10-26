@@ -21,6 +21,7 @@ export const MusicPlayerProvider = ({ children }) => {
   const [contextSongs, setContextSongs] = useState([]); // Songs from current context
   const [currentIndex, setCurrentIndex] = useState(0); // Index in contextSongs
   const [history, setHistory] = useState([]); // Playback history
+  const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
   const [likedSongIds, setLikedSongIds] = useState(new Set());
   
   // Refs for callbacks
@@ -31,6 +32,8 @@ export const MusicPlayerProvider = ({ children }) => {
   const currentIndexRef = useRef(currentIndex);
   const shuffleRef = useRef(shuffle);
   const repeatRef = useRef(repeat);
+  const historyRef = useRef(history);
+  const historyIndexRef = useRef(historyIndex);
 
   useEffect(() => { playerRef.current = player; }, [player]);
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
@@ -39,6 +42,8 @@ export const MusicPlayerProvider = ({ children }) => {
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { shuffleRef.current = shuffle; }, [shuffle]);
   useEffect(() => { repeatRef.current = repeat; }, [repeat]);
+  useEffect(() => { historyRef.current = history; }, [history]);
+  useEffect(() => { historyIndexRef.current = historyIndex; }, [historyIndex]);
 
   useEffect(() => {
     const fetchLikedSongs = async () => {
@@ -73,7 +78,24 @@ export const MusicPlayerProvider = ({ children }) => {
     setIsPlaying(true);
     
     // Add to history
-    setHistory(prev => [...prev.slice(-49), song]);
+    setHistory(prev => {
+      const newHistory = [...prev.slice(-49), song];
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
+  }, []);
+
+  // Play a single song without changing context (for search results)
+  const playSongOnly = useCallback((song) => {
+    setCurrentSong(song);
+    setIsPlaying(true);
+    
+    // Add to history
+    setHistory(prev => {
+      const newHistory = [...prev.slice(-49), song];
+      setHistoryIndex(newHistory.length - 1);
+      return newHistory;
+    });
   }, []);
 
   // Add song to queue (Spotify behavior: queue plays before context continues)
@@ -231,24 +253,68 @@ export const MusicPlayerProvider = ({ children }) => {
 
   // Handle next
   const handleNext = useCallback(() => {
-    const nextSong = getNextSong();
-    if (nextSong) {
+    // First check if we can move forward in history
+    const currentHistoryIndex = historyIndexRef.current;
+    const currentHistory = historyRef.current;
+    
+    if (currentHistoryIndex < currentHistory.length - 1) {
+      // Move forward in history
+      const nextSong = currentHistory[currentHistoryIndex + 1];
+      setHistoryIndex(currentHistoryIndex + 1);
       setCurrentSong(nextSong);
       setIsPlaying(true);
-      setHistory(prev => [...prev.slice(-49), nextSong]);
+      
+      // Update context index if the song exists in current context
+      const contextIndex = contextSongsRef.current.findIndex(
+        s => s.youtubeId === nextSong.youtubeId
+      );
+      if (contextIndex !== -1) {
+        setCurrentIndex(contextIndex);
+      }
     } else {
-      setIsPlaying(false);
+      // No more history, use context/queue
+      const nextSong = getNextSong();
+      if (nextSong) {
+        setCurrentSong(nextSong);
+        setIsPlaying(true);
+        setHistory(prev => {
+          const newHistory = [...prev.slice(-49), nextSong];
+          setHistoryIndex(newHistory.length - 1);
+          return newHistory;
+        });
+      } else {
+        setIsPlaying(false);
+      }
     }
   }, [getNextSong]);
 
   // Handle previous
   const handlePrevious = useCallback(() => {
-    const prevSong = getPreviousSong();
-    if (prevSong) {
+    // If we're more than 3 seconds into the song, restart it
+    if (currentTime > 3) {
+      if (playerRef.current) {
+        playerRef.current.seekTo(0);
+      }
+      return;
+    }
+
+    // Navigate back in history
+    const currentHistoryIndex = historyIndexRef.current;
+    if (currentHistoryIndex > 0) {
+      const prevSong = historyRef.current[currentHistoryIndex - 1];
+      setHistoryIndex(currentHistoryIndex - 1);
       setCurrentSong(prevSong);
       setIsPlaying(true);
+      
+      // Update context index if the song exists in current context
+      const contextIndex = contextSongsRef.current.findIndex(
+        s => s.youtubeId === prevSong.youtubeId
+      );
+      if (contextIndex !== -1) {
+        setCurrentIndex(contextIndex);
+      }
     }
-  }, [getPreviousSong]);
+  }, [currentTime]);
 
   // Toggle play/pause
   const togglePlayPause = useCallback(() => {
@@ -364,6 +430,7 @@ export const MusicPlayerProvider = ({ children }) => {
     
     // Actions
     playSongWithContext,
+    playSongOnly,
     addToQueue,
     reorderQueue,
     removeQueueItemAt,

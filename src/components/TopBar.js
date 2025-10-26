@@ -16,7 +16,7 @@ const TopBar = ({ extraContent = null }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [savingId, setSavingId] = useState(null);
   const { user, logout } = useAuth();
-  const { playSongWithContext, addToQueue } = useMusicPlayer();
+  const { playSongWithContext, playSongOnly, addToQueue } = useMusicPlayer();
   const { toasts, showToast, removeToast } = useToast();
   const navigate = useNavigate();
 
@@ -58,7 +58,7 @@ const TopBar = ({ extraContent = null }) => {
   }, [searchQuery]);
 
   const handlePlaySong = (song) => {
-    playSongWithContext(song, 'search', searchResults);
+    playSongOnly(song);
     setShowResults(false);
     setSearchQuery('');
   };
