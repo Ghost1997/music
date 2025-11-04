@@ -158,7 +158,7 @@
 }
 
 .playlist-item.added {
-  background: rgba(29, 185, 84, 0.1);
+  background: rgba(255, 184, 0, 0.1);
   cursor: default;
 }
 
@@ -207,7 +207,7 @@
 }
 
 .check-icon {
-  color: #1db954;
+  color: #FFB800;
   flex-shrink: 0;
 }
 
@@ -260,7 +260,7 @@
 
 .create-submit-btn {
   padding: 14px;
-  background: #1db954;
+  background: #F80000;
   border: none;
   border-radius: 500px;
   color: #fff;
@@ -271,7 +271,7 @@
 }
 
 .create-submit-btn:hover:not(:disabled) {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 

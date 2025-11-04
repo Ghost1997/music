@@ -10,7 +10,7 @@
   gap: 24px;
   margin-bottom: 24px;
   padding: 24px;
-  background: linear-gradient(180deg, rgba(139, 92, 246, 0.2) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(248, 0, 0, 0.2) 0%, transparent 100%);
   border-radius: 8px;
 }
 
@@ -70,7 +70,7 @@
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  background: #1db954;
+  background: #F80000;
   border: none;
   border-radius: 500px;
   color: #fff;
@@ -81,7 +81,7 @@
 }
 
 .play-all-btn:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 
@@ -119,11 +119,11 @@
 }
 
 .song-row.playing {
-  background: rgba(29, 185, 84, 0.1);
+  background: rgba(248, 0, 0, 0.1);
 }
 
 .song-row.playing .col-index {
-  color: #1db954;
+  color: #F80000;
 }
 
 .col-index {

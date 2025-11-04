@@ -8,7 +8,7 @@
   padding: 0 32px;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 2100;
 }
 
 .topbar-search {
@@ -151,9 +151,9 @@
 }
 
 .search-result-source.source-db {
-  color: #1db954;
-  border-color: rgba(29, 185, 84, 0.4);
-  background: rgba(29, 185, 84, 0.15);
+  color: #FFB800;
+  border-color: rgba(255, 184, 0, 0.4);
+  background: rgba(255, 184, 0, 0.15);
 }
 
 .search-result-source.source-yt {
@@ -174,8 +174,8 @@
   height: 32px;
   border-radius: 50%;
   background: transparent;
-  border: 1px solid rgba(29, 185, 84, 0.3);
-  color: #1db954;
+  border: 1px solid rgba(255, 184, 0, 0.3);
+  color: #FFB800;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,8 +185,8 @@
 }
 
 .save-to-db-btn:hover:not(:disabled) {
-  background: rgba(29, 185, 84, 0.15);
-  border-color: #1db954;
+  background: rgba(255, 184, 0, 0.15);
+  border-color: #FFB800;
   transform: scale(1.05);
 }
 
@@ -212,9 +212,9 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(29, 185, 84, 0.1);
-  border: 1px solid #1db954;
-  color: #1db954;
+  background: rgba(255, 107, 0, 0.1);
+  border: 1px solid #FF6B00;
+  color: #FF6B00;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,8 +224,8 @@
 }
 
 .add-to-queue-btn:hover {
-  background: #1db954;
-  color: #000;
+  background: #FF6B00;
+  color: #fff;
   transform: scale(1.1);
 }
 

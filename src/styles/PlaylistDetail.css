@@ -2,7 +2,7 @@
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  background: linear-gradient(180deg, #5038a0 0%, #121212 30%);
+  background: linear-gradient(180deg, #3a0a00 0%, #121212 30%);
 }
 
 .playlist-detail-header {
@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: center;
   color: #b3b3b3;
-  background: linear-gradient(135deg, #450af5, #8e8e8e);
+  background: linear-gradient(135deg, #F80000, #FF8533);
 }
 
 .header-info {
@@ -91,8 +91,8 @@
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  background: #1db954;
-  color: #000;
+  background: #F80000;
+  color: #fff;
   border: none;
   border-radius: 500px;
   font-size: 16px;
@@ -102,7 +102,7 @@
 }
 
 .play-all-btn:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 
@@ -130,6 +130,122 @@
   padding: 24px 32px;
   background: #121212;
   min-height: calc(100vh - 400px);
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  animation: fadeInConfirm 0.2s ease-in;
+}
+
+.confirm-dialog {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px;
+  width: min(420px, calc(100% - 40px));
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  animation: scaleInConfirm 0.18s ease-out;
+}
+
+.confirm-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 0, 0.12);
+  color: #FF6B00;
+}
+
+.confirm-dialog h3 {
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.confirm-dialog p {
+  color: #cbd5f5;
+  font-size: 15px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-cancel-btn,
+.confirm-delete-btn {
+  min-width: 120px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.confirm-cancel-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.confirm-cancel-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.confirm-delete-btn {
+  background: #F80000;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(248, 0, 0, 0.25);
+}
+
+.confirm-delete-btn:hover:not(:disabled) {
+  background: #FF4444;
+  box-shadow: 0 12px 28px rgba(255, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+.confirm-delete-btn:disabled,
+.confirm-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes fadeInConfirm {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleInConfirm {
+  from {
+    transform: translateY(12px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .empty-playlist {
@@ -189,11 +305,11 @@
 }
 
 .song-row.playing {
-  background: rgba(29, 185, 84, 0.1);
+  background: rgba(248, 0, 0, 0.1);
 }
 
 .song-row.playing .col-index {
-  color: #1db954;
+  color: #F80000;
 }
 
 .song-row:hover {
@@ -288,7 +404,7 @@
 
 .error-state button {
   padding: 12px 24px;
-  background: #1db954;
+  background: #F80000;
   color: #fff;
   border: none;
   border-radius: 500px;
@@ -299,7 +415,7 @@
 }
 
 .error-state button:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 

@@ -22,7 +22,7 @@ function App() {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
-        <p>Loading Songify...</p>
+        <p>Loading Tunezz...</p>
       </div>
     );
   }

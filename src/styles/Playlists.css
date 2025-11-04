@@ -25,7 +25,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: #1db954;
+  background: #F80000;
   color: #fff;
   border: none;
   border-radius: 500px;
@@ -36,7 +36,7 @@
 }
 
 .create-playlist-btn:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 32px;
-  background: #1db954;
+  background: #F80000;
   color: #fff;
   border: none;
   border-radius: 500px;
@@ -151,7 +151,7 @@
 }
 
 .create-first-btn:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 
@@ -263,7 +263,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #1db954;
+  border-color: #F80000;
 }
 
 .form-group textarea {
@@ -310,12 +310,12 @@
 }
 
 .btn-create {
-  background: #1db954;
+  background: #F80000;
   color: #fff;
 }
 
 .btn-create:hover:not(:disabled) {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.05);
 }
 

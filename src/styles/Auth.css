@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a0000 0%, #3a0a00 50%, #000000 100%);
   padding: 20px;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .auth-logo svg {
-  color: #1db954;
+  color: #F80000;
 }
 
 .auth-logo h1 {
@@ -90,7 +90,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #1db954;
+  border-color: #F80000;
 }
 
 .form-group input:disabled {
@@ -104,7 +104,7 @@
 
 .auth-button {
   padding: 16px;
-  background: #1db954;
+  background: #F80000;
   border: none;
   border-radius: 500px;
   color: #fff;
@@ -116,7 +116,7 @@
 }
 
 .auth-button:hover:not(:disabled) {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.02);
 }
 
@@ -139,14 +139,14 @@
 }
 
 .auth-footer a {
-  color: #1db954;
+  color: #FF6B00;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s;
 }
 
 .auth-footer a:hover {
-  color: #1ed760;
+  color: #FF8533;
   text-decoration: underline;
 }
 

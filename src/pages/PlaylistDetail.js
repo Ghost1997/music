@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Music, Trash2, Play } from 'lucide-react';
+import { Music, Trash2, Play, AlertTriangle } from 'lucide-react';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import { playlistAPI } from '../services/playlistAPI';
 import { songAPI } from '../services/api';
@@ -15,6 +15,8 @@ function PlaylistDetail() {
   const [playlist, setPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeletingPlaylist, setIsDeletingPlaylist] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -117,14 +119,25 @@ function PlaylistDetail() {
     }
   };
 
-  const handleDeletePlaylist = async () => {
-    if (!window.confirm('Delete this playlist? This action cannot be undone.')) return;
+  const handleDeletePlaylist = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const closeDeleteConfirmation = () => {
+    if (isDeletingPlaylist) return;
+    setIsDeleteConfirmOpen(false);
+  };
+
+  const confirmDeletePlaylist = async () => {
+    if (isDeletingPlaylist) return;
 
     try {
+      setIsDeletingPlaylist(true);
       const response = await playlistAPI.deletePlaylist(id);
-      
+
       if (response.success) {
         showToast('Playlist deleted', 'success');
+        setIsDeleteConfirmOpen(false);
         setTimeout(() => navigate('/dashboard/playlists'), 500);
       } else {
         showToast('Failed to delete playlist', 'error');
@@ -132,6 +145,8 @@ function PlaylistDetail() {
     } catch (error) {
       console.error('Error deleting playlist:', error);
       showToast('Failed to delete playlist', 'error');
+    } finally {
+      setIsDeletingPlaylist(false);
     }
   };
 
@@ -255,6 +270,35 @@ function PlaylistDetail() {
           </div>
         )}
       </div>
+      {isDeleteConfirmOpen && (
+        <div className="confirm-overlay" onClick={closeDeleteConfirmation}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-icon">
+              <AlertTriangle size={36} />
+            </div>
+            <h3>Delete playlist?</h3>
+            <p>This action cannot be undone. You will lose this playlist and its song order.</p>
+            <div className="confirm-actions">
+              <button
+                type="button"
+                className="confirm-cancel-btn"
+                onClick={closeDeleteConfirmation}
+                disabled={isDeletingPlaylist}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="confirm-delete-btn"
+                onClick={confirmDeletePlaylist}
+                disabled={isDeletingPlaylist}
+              >
+                {isDeletingPlaylist ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );

@@ -9,20 +9,20 @@ function ChannelDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const { playSongWithContext, currentSong, playbackContext, addToQueue } = useMusicPlayer();
-  
+
   const channelName = decodeURIComponent(channel);
   const allSongs = location.state?.songs || [];
-  
+
   // Pagination state
   const [displayedSongs, setDisplayedSongs] = useState([]);
   const [page, setPage] = useState(1);
   const SONGS_PER_PAGE = 50;
-  
+
   useEffect(() => {
     // Load initial songs
     setDisplayedSongs(allSongs.slice(0, SONGS_PER_PAGE));
   }, [allSongs]);
-  
+
   const loadMore = () => {
     const nextPage = page + 1;
     const startIndex = 0;
@@ -30,7 +30,7 @@ function ChannelDetail() {
     setDisplayedSongs(allSongs.slice(startIndex, endIndex));
     setPage(nextPage);
   };
-  
+
   const hasMore = displayedSongs.length < allSongs.length;
 
   const handlePlayAll = () => {
@@ -83,14 +83,14 @@ function ChannelDetail() {
           <div className="songs-list-header">
             <div className="col-index">#</div>
             <div className="col-title">Title</div>
-            <div className="col-artist-ch">Artist</div>
+
             <div className="col-actions"></div>
           </div>
           {displayedSongs.map((song, index) => {
             const isCurrentSong = currentSong?.youtubeId === song.youtubeId && playbackContext === `channel-${channelName}`;
             return (
-              <div 
-                key={song.youtubeId} 
+              <div
+                key={song.youtubeId}
                 className={`song-row ${isCurrentSong ? 'playing' : ''}`}
               >
                 <div className="col-index">{index + 1}</div>
@@ -98,9 +98,9 @@ function ChannelDetail() {
                   <img src={song.thumbnail} alt={song.title} />
                   <span>{song.title}</span>
                 </div>
-                <div className="col-artist-ch">{song.artist}</div>
+
                 <div className="col-actions">
-                  <button 
+                  <button
                     className="action-btn"
                     onClick={() => handleAddToQueue(song)}
                     title="Add to queue"

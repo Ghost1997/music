@@ -7,8 +7,8 @@ const Sidebar = ({ playlists = [] }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
-        <img src="/icons/icon-72x72.png" style={{ width: '40px', height: '40px' }} alt="Songify" className="sidebar-logo-icon" />
-        <span>Songify</span>
+        <img src="/icons/icon-72x72.png" style={{ width: '40px', height: '40px' }} alt="Tunezz" className="sidebar-logo-icon" />
+        <span>Tunezz</span>
       </div>
 
       <nav className="sidebar-nav">

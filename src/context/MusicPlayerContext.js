@@ -46,6 +46,30 @@ export const MusicPlayerProvider = ({ children }) => {
   useEffect(() => { historyIndexRef.current = historyIndex; }, [historyIndex]);
 
   useEffect(() => {
+    const playerInstance = playerRef.current;
+    if (!playerInstance) return;
+
+    try {
+      const hasVolume = typeof volume === 'number';
+      const clampedVolume = hasVolume ? Math.max(0, Math.min(volume, 100)) : null;
+
+      if (isMuted) {
+        if (hasVolume) {
+          playerInstance.setVolume(clampedVolume);
+        }
+        playerInstance.mute();
+      } else {
+        playerInstance.unMute();
+        if (hasVolume) {
+          playerInstance.setVolume(clampedVolume);
+        }
+      }
+    } catch (error) {
+      console.error('Error synchronizing player volume:', error);
+    }
+  }, [player, volume, isMuted, currentSong?.youtubeId]);
+
+  useEffect(() => {
     const fetchLikedSongs = async () => {
       try {
         const response = await songAPI.getLikedSongs();

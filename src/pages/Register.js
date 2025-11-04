@@ -46,12 +46,12 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">
-          <img src="/icons/icon-96x96.png" alt="Songify" width={48} height={48} />
-          <h1>Songify</h1>
+          <img src="/icons/icon-96x96.png" alt="Tunezz" width={48} height={48} />
+          <h1>Tunezz</h1>
         </div>
 
         <h2>Create your account</h2>
-        <p className="auth-subtitle">Join Songify and start listening</p>
+        <p className="auth-subtitle">Join Tunezz and start listening</p>
 
         {error && <div className="auth-error">{error}</div>}
 

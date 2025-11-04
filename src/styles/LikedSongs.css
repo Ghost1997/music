@@ -10,21 +10,21 @@
   align-items: flex-end;
   gap: 24px;
   padding: 80px 32px 24px;
-  background: linear-gradient(180deg, #5038a0 0%, rgba(18, 18, 18, 0.9) 100%);
+  background: linear-gradient(180deg, #3a0a00 0%, rgba(18, 18, 18, 0.9) 100%);
   position: relative;
 }
 
 .header-icon {
   width: 232px;
   height: 232px;
-  background: linear-gradient(135deg, #7358FF, #C3A6FF);
+  background: linear-gradient(135deg, #F80000, #FF8533);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(248, 0, 0, 0.5);
 }
 
 .header-info {
@@ -60,10 +60,10 @@
 }
 
 .play-all-btn {
-  background: #1db954;
+  background: #F80000;
   border: none;
   border-radius: 500px;
-  color: #000;
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
   padding: 14px 32px;
@@ -74,7 +74,7 @@
 }
 
 .play-all-btn:hover {
-  background: #1ed760;
+  background: #FF4444;
   transform: scale(1.06);
 }
 
@@ -141,11 +141,11 @@
 }
 
 .song-row.playing {
-  background: rgba(29, 185, 84, 0.1);
+  background: rgba(248, 0, 0, 0.1);
 }
 
 .song-row.playing .col-index {
-  color: #1db954;
+  color: #F80000;
 }
 
 .song-row:hover {
@@ -305,11 +305,11 @@
 }
 
 .unlike-btn {
-  color: #1db954;
+  color: #FFB800;
 }
 
 .unlike-btn:hover {
-  color: #1ed760;
-  background: rgba(29, 185, 84, 0.12);
+  color: #FFC933;
+  background: rgba(255, 184, 0, 0.12);
   transform: scale(1.05);
 }

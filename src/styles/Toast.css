@@ -49,11 +49,11 @@
 }
 
 .toast-success {
-  border-left: 3px solid #1db954;
+  border-left: 3px solid #FFB800;
 }
 
 .toast-success svg {
-  color: #1db954;
+  color: #FFB800;
 }
 
 .toast-error {
